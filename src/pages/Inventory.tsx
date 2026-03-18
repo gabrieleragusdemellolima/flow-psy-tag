@@ -23,13 +23,14 @@ export default function Inventory() {
     await addProduct({
       name: form.name,
       price: parseFloat(form.price),
+      cost_price: parseFloat(form.cost_price) || 0,
       category: form.category,
       emoji: form.emoji || emojiMap[form.category],
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 5,
       created_by: user.id,
     }, user.id);
-    setForm({ name: '', price: '', category: 'bebidas', emoji: '🍺', stock: '50', min_stock: '10' });
+    setForm({ name: '', price: '', cost_price: '', category: 'bebidas', emoji: '🍺', stock: '50', min_stock: '10' });
     setShowForm(false);
   };
 
