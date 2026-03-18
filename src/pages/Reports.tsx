@@ -3,6 +3,8 @@ import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { generateReportPdf } from '@/lib/generateReportPdf';
+import { Download } from 'lucide-react';
 
 const COLORS = ['hsl(82,84%,67%)', 'hsl(270,70%,60%)', 'hsl(25,95%,60%)', 'hsl(200,80%,60%)'];
 
