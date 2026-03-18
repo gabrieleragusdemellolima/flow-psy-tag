@@ -79,6 +79,10 @@ export default function Reports() {
   const totalSales = filteredTransactions.filter(t => t.type === 'purchase').reduce((s, t) => s + t.amount, 0);
   const totalLoaded = filteredTransactions.filter(t => t.type === 'load').reduce((s, t) => s + t.amount, 0);
   const totalBalance = tags.reduce((s, t) => s + t.balance, 0);
+  const totalCost = filteredSaleDetails.reduce((s, d) => s + d.cost_price * d.quantity, 0);
+  const totalRevenue = filteredSaleDetails.reduce((s, d) => s + d.unit_price * d.quantity, 0);
+  const totalProfit = totalRevenue - totalCost;
+  const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
