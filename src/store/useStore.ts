@@ -113,7 +113,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   fetchTransactions: async () => {
     const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(200);
-    if (data) set({ transactions: data.map(t => ({ ...t, amount: Number(t.amount) })) as Transaction[] });
+    if (data) set({ transactions: data.map(t => ({ ...t, amount: Number(t.amount) })) as unknown as Transaction[] });
   },
 
   loadTag: async (tagCode, amount, paymentMethod, operatorId) => {
