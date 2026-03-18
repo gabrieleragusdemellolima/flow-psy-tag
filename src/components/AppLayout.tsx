@@ -16,7 +16,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { to: '/pos', icon: ShoppingCart, label: 'PDV' },
     { to: '/inventory', icon: Package, label: 'Produtos' },
     { to: '/reports', icon: BarChart3, label: 'Relatórios' },
-    ...(isAdmin ? [{ to: '/admin', icon: Users, label: 'Admin' }] : []),
+    ...(isAdmin ? [
+      { to: '/courtesy', icon: Music, label: 'Consumação' },
+      { to: '/admin', icon: Users, label: 'Admin' },
+    ] : []),
   ];
 
   return (

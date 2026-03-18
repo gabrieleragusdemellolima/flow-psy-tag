@@ -50,6 +50,7 @@ function AppRoutes() {
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/courtesy" element={<Courtesy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
