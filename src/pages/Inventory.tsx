@@ -39,6 +39,7 @@ export default function Inventory() {
     await updateProduct(id, {
       name: form.name,
       price: parseFloat(form.price),
+      cost_price: parseFloat(form.cost_price) || 0,
       category: form.category,
       emoji: form.emoji,
       min_stock: parseInt(form.min_stock) || 5,
