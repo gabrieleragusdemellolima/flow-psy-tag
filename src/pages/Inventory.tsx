@@ -14,7 +14,7 @@ export default function Inventory() {
   const [editId, setEditId] = useState<string | null>(null);
   const [stockEditId, setStockEditId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
-  const [form, setForm] = useState({ name: '', price: '', category: 'bebidas' as Product['category'], emoji: '🍺', stock: '50', min_stock: '10' });
+  const [form, setForm] = useState({ name: '', price: '', cost_price: '', category: 'bebidas' as Product['category'], emoji: '🍺', stock: '50', min_stock: '10' });
 
   useEffect(() => { if (user) fetchProducts(); }, [user]);
 
