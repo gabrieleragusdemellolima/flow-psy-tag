@@ -31,9 +31,11 @@ export interface Transaction {
   tag_id: string | null;
   operator_id: string;
   amount: number;
-  type: 'load' | 'purchase';
+  type: 'load' | 'purchase' | 'courtesy';
   payment_method: string | null;
   created_at: string;
+  courtesy_name?: string | null;
+  courtesy_role?: string | null;
 }
 
 interface AppStore {
