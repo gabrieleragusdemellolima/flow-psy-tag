@@ -142,7 +142,12 @@ export default function Inventory() {
                     <p className="font-medium text-sm">{product.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{product.category}</p>
                   </div>
-                  <span className="font-mono text-primary font-semibold">R$ {product.price.toFixed(2)}</span>
+                  <div className="text-right">
+                    <span className="font-mono text-primary font-semibold">R$ {product.price.toFixed(2)}</span>
+                    {isAdmin && product.cost_price > 0 && (
+                      <p className="font-mono text-xs text-muted-foreground">Custo: R$ {product.cost_price.toFixed(2)}</p>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-2">
                     {lowStock && <AlertTriangle size={14} className="text-accent" />}
