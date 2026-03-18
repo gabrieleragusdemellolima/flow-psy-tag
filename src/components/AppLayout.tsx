@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User, Shield, Users } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User, Shield, Users, Music } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
