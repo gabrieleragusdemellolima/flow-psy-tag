@@ -11,6 +11,7 @@ interface SaleDetail {
   product_category: string;
   quantity: number;
   unit_price: number;
+  cost_price: number;
   operator_email: string;
   created_at: string;
 }
