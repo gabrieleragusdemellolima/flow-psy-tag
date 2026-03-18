@@ -10,6 +10,8 @@ const categories = [
   { id: 'comidas', label: 'Comidas', emoji: '🍟' },
   { id: 'cigarros', label: 'Cigarros', emoji: '🚬' },
   { id: 'doces', label: 'Doces', emoji: '🍬' },
+  { id: 'ingressos', label: 'Ingressos', emoji: '🎫' },
+  { id: 'estacionamento', label: 'Estacion.', emoji: '🅿️' },
 ] as const;
 
 export default function POS() {
