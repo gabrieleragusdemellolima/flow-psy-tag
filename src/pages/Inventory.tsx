@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useStore, type Product } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Edit2, Check, X, Package, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, Package, AlertTriangle, Shield } from 'lucide-react';
 
 const categoryOptions: Product['category'][] = ['bebidas', 'comidas', 'cigarros', 'doces'];
 const emojiMap: Record<string, string> = { bebidas: '🍺', comidas: '🍔', cigarros: '🚬', doces: '🍬' };
 
 export default function Inventory() {
   const { products, addProduct, removeProduct, updateProduct, updateStock, fetchProducts } = useStore();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [stockEditId, setStockEditId] = useState<string | null>(null);
@@ -64,14 +64,23 @@ export default function Inventory() {
           <h1 className="font-display text-2xl font-bold">Produtos & Estoque</h1>
           <p className="text-muted-foreground text-sm mt-1">{products.length} itens cadastrados</p>
         </div>
-        <motion.button whileTap={{ scale: 0.96 }}
-          onClick={() => { setShowForm(!showForm); setEditId(null); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm">
-          <Plus size={16} /> Novo Produto
-        </motion.button>
+        {isAdmin && (
+          <motion.button whileTap={{ scale: 0.96 }}
+            onClick={() => { setShowForm(!showForm); setEditId(null); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm">
+            <Plus size={16} /> Novo Produto
+          </motion.button>
+        )}
       </div>
 
-      {showForm && (
+      {!isAdmin && (
+        <div className="card-surface-sm p-4 flex items-center gap-3 text-muted-foreground">
+          <Shield size={18} />
+          <p className="text-sm">Apenas administradores podem alterar produtos e estoque.</p>
+        </div>
+      )}
+
+      {showForm && isAdmin && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
           className="card-surface p-5 space-y-4">
           <h3 className="font-display font-semibold">Novo Produto</h3>
@@ -103,7 +112,7 @@ export default function Inventory() {
           const lowStock = product.stock <= product.min_stock;
           return (
             <motion.div key={product.id} layout className="card-surface-sm p-4 flex items-center gap-4">
-              {editId === product.id ? (
+              {editId === product.id && isAdmin ? (
                 <>
                   <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -129,10 +138,9 @@ export default function Inventory() {
                   </div>
                   <span className="font-mono text-primary font-semibold">R$ {product.price.toFixed(2)}</span>
 
-                  {/* Stock control */}
                   <div className="flex items-center gap-2">
                     {lowStock && <AlertTriangle size={14} className="text-accent" />}
-                    {stockEditId === product.id ? (
+                    {stockEditId === product.id && isAdmin ? (
                       <div className="flex items-center gap-1">
                         <input value={stockValue} onChange={(e) => setStockValue(e.target.value)} type="number"
                           className="w-16 bg-muted/50 px-2 py-1 rounded text-sm font-mono text-foreground outline-none" autoFocus />
@@ -140,15 +148,20 @@ export default function Inventory() {
                         <button onClick={() => setStockEditId(null)} className="text-muted-foreground p-1"><X size={14} /></button>
                       </div>
                     ) : (
-                      <button onClick={() => { setStockEditId(product.id); setStockValue(String(product.stock)); }}
-                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono ${lowStock ? 'text-accent bg-accent/10' : 'text-muted-foreground bg-muted/30'}`}>
+                      <button
+                        onClick={() => { if (isAdmin) { setStockEditId(product.id); setStockValue(String(product.stock)); } }}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono ${lowStock ? 'text-accent bg-accent/10' : 'text-muted-foreground bg-muted/30'} ${!isAdmin ? 'cursor-default' : ''}`}>
                         <Package size={12} /> {product.stock}
                       </button>
                     )}
                   </div>
 
-                  <button onClick={() => startEdit(product)} className="text-muted-foreground hover:text-foreground p-2 rounded hover:bg-muted/50"><Edit2 size={14} /></button>
-                  <button onClick={() => removeProduct(product.id)} className="text-muted-foreground hover:text-accent p-2 rounded hover:bg-accent/10"><Trash2 size={14} /></button>
+                  {isAdmin && (
+                    <>
+                      <button onClick={() => startEdit(product)} className="text-muted-foreground hover:text-foreground p-2 rounded hover:bg-muted/50"><Edit2 size={14} /></button>
+                      <button onClick={() => removeProduct(product.id)} className="text-muted-foreground hover:text-accent p-2 rounded hover:bg-accent/10"><Trash2 size={14} /></button>
+                    </>
+                  )}
                 </>
               )}
             </motion.div>
