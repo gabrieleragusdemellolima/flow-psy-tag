@@ -5,6 +5,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  cost_price: number;
   category: 'bebidas' | 'comidas' | 'cigarros' | 'doces';
   emoji: string;
   stock: number;
@@ -99,7 +100,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   fetchProducts: async () => {
     const { data } = await supabase.from('products').select('*').eq('active', true).order('category');
-    if (data) set({ products: data.map(p => ({ ...p, price: Number(p.price), stock: Number(p.stock), min_stock: Number(p.min_stock) })) as Product[] });
+    if (data) set({ products: data.map(p => ({ ...p, price: Number(p.price), cost_price: Number(p.cost_price), stock: Number(p.stock), min_stock: Number(p.min_stock) })) as Product[] });
   },
 
   fetchTags: async () => {

@@ -14,7 +14,7 @@ export default function Inventory() {
   const [editId, setEditId] = useState<string | null>(null);
   const [stockEditId, setStockEditId] = useState<string | null>(null);
   const [stockValue, setStockValue] = useState('');
-  const [form, setForm] = useState({ name: '', price: '', category: 'bebidas' as Product['category'], emoji: '🍺', stock: '50', min_stock: '10' });
+  const [form, setForm] = useState({ name: '', price: '', cost_price: '', category: 'bebidas' as Product['category'], emoji: '🍺', stock: '50', min_stock: '10' });
 
   useEffect(() => { if (user) fetchProducts(); }, [user]);
 
@@ -23,13 +23,14 @@ export default function Inventory() {
     await addProduct({
       name: form.name,
       price: parseFloat(form.price),
+      cost_price: parseFloat(form.cost_price) || 0,
       category: form.category,
       emoji: form.emoji || emojiMap[form.category],
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 5,
       created_by: user.id,
     }, user.id);
-    setForm({ name: '', price: '', category: 'bebidas', emoji: '🍺', stock: '50', min_stock: '10' });
+    setForm({ name: '', price: '', cost_price: '', category: 'bebidas', emoji: '🍺', stock: '50', min_stock: '10' });
     setShowForm(false);
   };
 
@@ -38,6 +39,7 @@ export default function Inventory() {
     await updateProduct(id, {
       name: form.name,
       price: parseFloat(form.price),
+      cost_price: parseFloat(form.cost_price) || 0,
       category: form.category,
       emoji: form.emoji,
       min_stock: parseInt(form.min_stock) || 5,
@@ -54,7 +56,7 @@ export default function Inventory() {
 
   const startEdit = (p: Product) => {
     setEditId(p.id);
-    setForm({ name: p.name, price: String(p.price), category: p.category, emoji: p.emoji, stock: String(p.stock), min_stock: String(p.min_stock) });
+    setForm({ name: p.name, price: String(p.price), cost_price: String(p.cost_price), category: p.category, emoji: p.emoji, stock: String(p.stock), min_stock: String(p.min_stock) });
   };
 
   return (
@@ -87,7 +89,9 @@ export default function Inventory() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome"
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground" />
-            <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Preço" type="number"
+            <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Preço venda" type="number"
+              className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 font-mono text-foreground placeholder:text-muted-foreground" />
+            <input value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} placeholder="Preço custo" type="number"
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 font-mono text-foreground placeholder:text-muted-foreground" />
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'], emoji: emojiMap[e.target.value] })}
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none text-foreground">
@@ -114,11 +118,13 @@ export default function Inventory() {
             <motion.div key={product.id} layout className="card-surface-sm p-4 flex items-center gap-4">
               {editId === product.id && isAdmin ? (
                 <>
-                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2">
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground" />
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground" placeholder="Nome" />
                     <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number"
-                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" />
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" placeholder="Venda" />
+                    <input value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} type="number"
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" placeholder="Custo" />
                     <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'] })}
                       className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground">
                       {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -136,7 +142,12 @@ export default function Inventory() {
                     <p className="font-medium text-sm">{product.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{product.category}</p>
                   </div>
-                  <span className="font-mono text-primary font-semibold">R$ {product.price.toFixed(2)}</span>
+                  <div className="text-right">
+                    <span className="font-mono text-primary font-semibold">R$ {product.price.toFixed(2)}</span>
+                    {isAdmin && product.cost_price > 0 && (
+                      <p className="font-mono text-xs text-muted-foreground">Custo: R$ {product.cost_price.toFixed(2)}</p>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-2">
                     {lowStock && <AlertTriangle size={14} className="text-accent" />}

@@ -11,6 +11,7 @@ interface SaleDetail {
   product_category: string;
   quantity: number;
   unit_price: number;
+  cost_price: number;
   operator_email: string;
   created_at: string;
 }
@@ -36,7 +37,7 @@ export default function Reports() {
       .from('sale_items')
       .select(`
         quantity, unit_price, created_at,
-        product:products(name, category),
+        product:products(name, category, cost_price),
         transaction:transactions(operator_id, created_at)
       `)
       .order('created_at', { ascending: false });
@@ -52,6 +53,7 @@ export default function Reports() {
         product_category: d.product?.category || '',
         quantity: d.quantity,
         unit_price: Number(d.unit_price),
+        cost_price: Number(d.product?.cost_price || 0),
         operator_email: profileMap.get(d.transaction?.operator_id) || 'Unknown',
         created_at: d.transaction?.created_at || d.created_at,
       })));
@@ -77,6 +79,10 @@ export default function Reports() {
   const totalSales = filteredTransactions.filter(t => t.type === 'purchase').reduce((s, t) => s + t.amount, 0);
   const totalLoaded = filteredTransactions.filter(t => t.type === 'load').reduce((s, t) => s + t.amount, 0);
   const totalBalance = tags.reduce((s, t) => s + t.balance, 0);
+  const totalCost = filteredSaleDetails.reduce((s, d) => s + d.cost_price * d.quantity, 0);
+  const totalRevenue = filteredSaleDetails.reduce((s, d) => s + d.unit_price * d.quantity, 0);
+  const totalProfit = totalRevenue - totalCost;
+  const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
@@ -120,11 +126,13 @@ export default function Reports() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { label: 'Total Vendido', value: `R$ ${totalSales.toFixed(2)}`, glow: 'glow-primary' },
           { label: 'Total Carregado', value: `R$ ${totalLoaded.toFixed(2)}`, glow: 'glow-secondary' },
           { label: 'Saldo em Tags', value: `R$ ${totalBalance.toFixed(2)}`, glow: 'glow-primary' },
+          { label: 'Custo Total', value: `R$ ${totalCost.toFixed(2)}`, glow: '' },
+          { label: 'Lucro', value: `R$ ${totalProfit.toFixed(2)} (${profitMargin.toFixed(1)}%)`, glow: 'glow-secondary' },
         ].map((s) => (
           <div key={s.label} className={`card-surface p-4 ${s.glow}`}>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</p>
