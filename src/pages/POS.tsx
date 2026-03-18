@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore, type Product } from '@/store/useStore';
+import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus, X, CheckCircle2, AlertTriangle, Smartphone } from 'lucide-react';
 
@@ -15,13 +16,17 @@ export default function POS() {
   const {
     products, cart, addToCart, removeFromCart, updateQuantity,
     clearCart, cartTotal, tags, activeTag, setActiveTag,
-    deductFromTag, addTransaction, isDemoMode,
+    processPayment, isDemoMode, fetchProducts, fetchTags,
   } = useStore();
+  const { user } = useAuth();
 
   const [filter, setFilter] = useState<string>('all');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
   const total = cartTotal();
@@ -35,17 +40,18 @@ export default function POS() {
     }, 1000);
   };
 
-  const handlePay = () => {
-    if (!activeTag || cart.length === 0) return;
+  const handlePay = async () => {
+    if (!activeTag || cart.length === 0 || !user) return;
     if (total > activeTag.balance) {
       setShowError(`SALDO INSUFICIENTE // R$ ${activeTag.balance.toFixed(2)} disponível`);
       setTimeout(() => setShowError(''), 3000);
       return;
     }
-    const ok = deductFromTag(activeTag.id, total);
-    if (ok) {
-      addTransaction({ tagId: activeTag.id, amount: total, type: 'purchase', items: [...cart] });
+    setProcessing(true);
+    const ok = await processPayment(user.id);
+    setProcessing(false);
 
+    if (ok) {
       try {
         const ctx = new AudioContext();
         const osc = ctx.createOscillator();
@@ -61,19 +67,13 @@ export default function POS() {
           osc2.start(); osc2.stop(ctx.currentTime + 0.1);
         }, 120);
       } catch {}
-
       setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        clearCart();
-        setActiveTag(null);
-      }, 2000);
+      setTimeout(() => { setShowSuccess(false); setActiveTag(null); }, 2000);
     }
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] pb-16 md:pb-0">
-      {/* Success/Error overlays */}
       <AnimatePresence>
         {showSuccess && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -98,22 +98,16 @@ export default function POS() {
 
       {/* Product grid */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Category filter */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {categories.map((c) => (
-            <motion.button key={c.id} whileTap={{ scale: 0.95 }}
-              onClick={() => setFilter(c.id)}
+            <motion.button key={c.id} whileTap={{ scale: 0.95 }} onClick={() => setFilter(c.id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-                ${filter === c.id
-                  ? 'bg-secondary/20 text-secondary glow-secondary'
-                  : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'}`}
-            >
+                ${filter === c.id ? 'bg-secondary/20 text-secondary glow-secondary' : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'}`}>
               <span>{c.emoji}</span> {c.label}
             </motion.button>
           ))}
         </div>
 
-        {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto flex-1 pr-1">
           {filtered.map((product) => (
             <ProductCard key={product.id} product={product} onAdd={addToCart} />
@@ -123,25 +117,20 @@ export default function POS() {
 
       {/* Cart sidebar */}
       <div className="w-full lg:w-80 card-surface p-4 flex flex-col">
-        {/* Tag status */}
         <div className="card-surface-sm p-3 mb-4 text-center">
           {activeTag ? (
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Tag Conectada</p>
-              <p className="font-mono text-sm text-primary font-bold">{activeTag.id}</p>
-              <p className="font-mono text-lg text-primary">R$ {(tags.find(t => t.id === activeTag.id)?.balance ?? activeTag.balance).toFixed(2)}</p>
+              <p className="font-mono text-sm text-primary font-bold">{activeTag.tag_code}</p>
+              <p className="font-mono text-lg text-primary">R$ {activeTag.balance.toFixed(2)}</p>
             </div>
           ) : (
             <div>
               <Smartphone className="mx-auto text-muted-foreground mb-1" size={20} />
-              <p className="text-xs text-muted-foreground">
-                {scanning ? 'Escaneando...' : 'READY TO SCAN'}
-              </p>
+              <p className="text-xs text-muted-foreground">{scanning ? 'Escaneando...' : 'READY TO SCAN'}</p>
               {isDemoMode && (
                 <button onClick={handleSimulateScan} disabled={scanning}
-                  className="mt-2 text-xs text-secondary underline disabled:opacity-50">
-                  Simular Tag
-                </button>
+                  className="mt-2 text-xs text-secondary underline disabled:opacity-50">Simular Tag</button>
               )}
             </div>
           )}
@@ -152,51 +141,37 @@ export default function POS() {
         <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
           {cart.length === 0 ? (
             <p className="text-muted-foreground text-xs text-center py-6">Selecione produtos</p>
-          ) : (
-            cart.map((item) => (
-              <div key={item.product.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.product.emoji} {item.product.name}</p>
-                  <p className="font-mono text-xs text-muted-foreground">R$ {item.product.price.toFixed(2)}</p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                    className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground">
-                    <Minus size={12} />
-                  </button>
-                  <span className="font-mono text-sm w-6 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground">
-                    <Plus size={12} />
-                  </button>
-                  <button onClick={() => removeFromCart(item.product.id)}
-                    className="w-7 h-7 flex items-center justify-center text-accent hover:bg-accent/10 rounded">
-                    <X size={12} />
-                  </button>
-                </div>
+          ) : cart.map((item) => (
+            <div key={item.product.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{item.product.emoji} {item.product.name}</p>
+                <p className="font-mono text-xs text-muted-foreground">R$ {item.product.price.toFixed(2)}</p>
               </div>
-            ))
-          )}
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                  className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Minus size={12} /></button>
+                <span className="font-mono text-sm w-6 text-center">{item.quantity}</span>
+                <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                  className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Plus size={12} /></button>
+                <button onClick={() => removeFromCart(item.product.id)}
+                  className="w-7 h-7 flex items-center justify-center text-accent hover:bg-accent/10 rounded"><X size={12} /></button>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Total + pay */}
         <div className="mt-4 pt-4 border-t border-border/50">
           <div className="flex justify-between items-center mb-4">
             <span className="text-sm text-muted-foreground">Total</span>
             <span className="font-mono text-3xl font-bold text-primary">R$ {total.toFixed(2)}</span>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handlePay}
-            disabled={!activeTag || cart.length === 0}
-            className="w-full py-4 bg-primary text-primary-foreground rounded-lg font-display font-bold text-base glow-primary disabled:opacity-30 disabled:shadow-none transition-all"
-          >
-            {activeTag ? 'CONFIRMAR PAGAMENTO' : 'TAP TAG TO PAY'}
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handlePay}
+            disabled={!activeTag || cart.length === 0 || processing}
+            className="w-full py-4 bg-primary text-primary-foreground rounded-lg font-display font-bold text-base glow-primary disabled:opacity-30 disabled:shadow-none transition-all">
+            {processing ? 'PROCESSANDO...' : activeTag ? 'CONFIRMAR PAGAMENTO' : 'TAP TAG TO PAY'}
           </motion.button>
           {cart.length > 0 && (
-            <button onClick={clearCart} className="w-full mt-2 py-2 text-xs text-muted-foreground hover:text-accent transition-colors">
-              Limpar carrinho
-            </button>
+            <button onClick={clearCart} className="w-full mt-2 py-2 text-xs text-muted-foreground hover:text-accent transition-colors">Limpar carrinho</button>
           )}
         </div>
       </div>
@@ -205,12 +180,17 @@ export default function POS() {
 }
 
 function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product) => void }) {
+  const lowStock = product.stock <= product.min_stock;
   return (
-    <motion.button
-      whileTap={{ scale: 0.96 }}
-      onClick={() => onAdd(product)}
-      className="card-surface-sm aspect-square flex flex-col items-center justify-center gap-2 p-3 hover:bg-muted/30 transition-all group"
-    >
+    <motion.button whileTap={{ scale: 0.96 }} onClick={() => onAdd(product)}
+      disabled={product.stock <= 0}
+      className={`card-surface-sm aspect-square flex flex-col items-center justify-center gap-2 p-3 transition-all group relative
+        ${product.stock <= 0 ? 'opacity-40' : 'hover:bg-muted/30'}`}>
+      {lowStock && product.stock > 0 && (
+        <span className="absolute top-2 right-2 text-[10px] font-mono text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+          {product.stock}
+        </span>
+      )}
       <span className="text-4xl group-hover:scale-110 transition-transform">{product.emoji}</span>
       <span className="text-sm font-medium text-foreground text-center leading-tight">{product.name}</span>
       <span className="font-mono text-primary font-semibold text-sm">R$ {product.price.toFixed(2)}</span>
