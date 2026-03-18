@@ -53,6 +53,7 @@ export default function Reports() {
         product_category: d.product?.category || '',
         quantity: d.quantity,
         unit_price: Number(d.unit_price),
+        cost_price: Number(d.product?.cost_price || 0),
         operator_email: profileMap.get(d.transaction?.operator_id) || 'Unknown',
         created_at: d.transaction?.created_at || d.created_at,
       })));
