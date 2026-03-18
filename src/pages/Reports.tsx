@@ -37,7 +37,7 @@ export default function Reports() {
       .from('sale_items')
       .select(`
         quantity, unit_price, created_at,
-        product:products(name, category),
+        product:products(name, category, cost_price),
         transaction:transactions(operator_id, created_at)
       `)
       .order('created_at', { ascending: false });
