@@ -1,22 +1,23 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User, Shield, Users } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/load-tag', icon: CreditCard, label: 'Carregar Tag' },
-  { to: '/pos', icon: ShoppingCart, label: 'PDV' },
-  { to: '/inventory', icon: Package, label: 'Produtos' },
-  { to: '/reports', icon: BarChart3, label: 'Relatórios' },
-];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isDemoMode = useStore((s) => s.isDemoMode);
   const toggleDemoMode = useStore((s) => s.toggleDemoMode);
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/load-tag', icon: CreditCard, label: 'Carregar Tag' },
+    { to: '/pos', icon: ShoppingCart, label: 'PDV' },
+    { to: '/inventory', icon: Package, label: 'Produtos' },
+    { to: '/reports', icon: BarChart3, label: 'Relatórios' },
+    ...(isAdmin ? [{ to: '/admin', icon: Users, label: 'Admin' }] : []),
+  ];
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -50,10 +51,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="hidden lg:inline">{isDemoMode ? 'DEMO MODE' : 'NFC LIVE'}</span>
           </button>
 
-          {/* User info */}
           <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-            <User size={14} />
-            <span className="hidden lg:inline truncate">{user?.email?.split('@')[0]}</span>
+            {isAdmin ? <Shield size={14} className="text-primary" /> : <User size={14} />}
+            <span className="hidden lg:inline truncate">
+              {user?.email?.split('@')[0]}
+              {isAdmin && <span className="text-primary ml-1">ADM</span>}
+            </span>
           </div>
 
           <button onClick={signOut}
@@ -73,13 +76,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 flex justify-around py-2 z-50">
-        {navItems.slice(0, 4).map(({ to, icon: Icon, label }) => {
+        {navItems.slice(0, 5).map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to;
           return (
             <NavLink key={to} to={to}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] font-medium
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium
                 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-              <Icon size={20} />{label}
+              <Icon size={18} />{label}
             </NavLink>
           );
         })}
