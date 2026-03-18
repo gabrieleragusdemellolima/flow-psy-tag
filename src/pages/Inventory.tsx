@@ -89,7 +89,9 @@ export default function Inventory() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome"
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground" />
-            <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Preço" type="number"
+            <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Preço venda" type="number"
+              className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 font-mono text-foreground placeholder:text-muted-foreground" />
+            <input value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} placeholder="Preço custo" type="number"
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 font-mono text-foreground placeholder:text-muted-foreground" />
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'], emoji: emojiMap[e.target.value] })}
               className="bg-muted/50 px-3 py-2.5 rounded-lg text-sm outline-none text-foreground">
