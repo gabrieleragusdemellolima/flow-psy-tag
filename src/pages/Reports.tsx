@@ -195,6 +195,24 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Courtesy section */}
+      {courtesyTransactions.length > 0 && (
+        <div className="card-surface p-5">
+          <h3 className="font-display font-semibold text-sm mb-4">🎵 Consumação DJ / Staff ({courtesyTransactions.length})</h3>
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {courtesyTransactions.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between p-3 bg-secondary/5 rounded-lg border border-secondary/10">
+                <div>
+                  <p className="text-sm font-medium">{(tx as any).courtesy_name || 'Sem nome'}</p>
+                  <span className="text-xs text-muted-foreground capitalize">{(tx as any).courtesy_role || ''} • {new Date(tx.created_at).toLocaleString('pt-BR')}</span>
+                </div>
+                <span className="font-mono font-semibold text-secondary">R$ {tx.amount.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Transaction log */}
       <div className="card-surface p-5">
         <h3 className="font-display font-semibold text-sm mb-4">Histórico ({filteredTransactions.length})</h3>
@@ -204,15 +222,22 @@ export default function Reports() {
           ) : filteredTransactions.map((tx) => (
             <div key={tx.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
               <div>
-                <span className={`text-xs font-medium uppercase tracking-wider ${tx.type === 'load' ? 'text-primary' : 'text-secondary'}`}>
-                  {tx.type === 'load' ? 'CARGA' : 'COMPRA'}
+                <span className={`text-xs font-medium uppercase tracking-wider ${
+                  tx.type === 'load' ? 'text-primary' : tx.type === 'courtesy' ? 'text-secondary' : 'text-accent'
+                }`}>
+                  {tx.type === 'load' ? 'CARGA' : tx.type === 'courtesy' ? 'CONSUMAÇÃO' : 'COMPRA'}
                 </span>
+                {tx.type === 'courtesy' && (tx as any).courtesy_name && (
+                  <span className="text-xs text-muted-foreground ml-2">{(tx as any).courtesy_name}</span>
+                )}
                 <p className="font-mono text-xs text-muted-foreground mt-0.5">
                   {new Date(tx.created_at).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <span className={`font-mono font-semibold ${tx.type === 'load' ? 'text-primary' : 'text-secondary'}`}>
-                {tx.type === 'load' ? '+' : '-'}R$ {tx.amount.toFixed(2)}
+              <span className={`font-mono font-semibold ${
+                tx.type === 'load' ? 'text-primary' : tx.type === 'courtesy' ? 'text-secondary' : 'text-accent'
+              }`}>
+                {tx.type === 'purchase' ? '-' : '+'}R$ {tx.amount.toFixed(2)}
               </span>
             </div>
           ))}
