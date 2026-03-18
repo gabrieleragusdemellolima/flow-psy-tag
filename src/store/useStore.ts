@@ -31,9 +31,11 @@ export interface Transaction {
   tag_id: string | null;
   operator_id: string;
   amount: number;
-  type: 'load' | 'purchase';
+  type: 'load' | 'purchase' | 'courtesy';
   payment_method: string | null;
   created_at: string;
+  courtesy_name?: string | null;
+  courtesy_role?: string | null;
 }
 
 interface AppStore {
@@ -62,6 +64,7 @@ interface AppStore {
   fetchTransactions: () => Promise<void>;
   
   loadTag: (tagCode: string, amount: number, paymentMethod: string, operatorId: string) => Promise<boolean>;
+  loadTagCourtesy: (tagCode: string, amount: number, operatorId: string, courtesyName: string, courtesyRole: string) => Promise<boolean>;
   processPayment: (operatorId: string) => Promise<boolean>;
 
   addProduct: (product: Omit<Product, 'id' | 'active'>, userId: string) => Promise<void>;
@@ -110,7 +113,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   fetchTransactions: async () => {
     const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(200);
-    if (data) set({ transactions: data.map(t => ({ ...t, amount: Number(t.amount) })) as Transaction[] });
+    if (data) set({ transactions: data.map(t => ({ ...t, amount: Number(t.amount) })) as unknown as Transaction[] });
   },
 
   loadTag: async (tagCode, amount, paymentMethod, operatorId) => {
@@ -135,6 +138,32 @@ export const useStore = create<AppStore>((set, get) => ({
       amount,
       type: 'load',
       payment_method: paymentMethod,
+    });
+
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
+  loadTagCourtesy: async (tagCode, amount, operatorId, courtesyName, courtesyRole) => {
+    let { data: tag } = await supabase.from('tags').select('*').eq('tag_code', tagCode).single();
+    if (!tag) {
+      const { data: newTag, error } = await supabase.from('tags').insert({ tag_code: tagCode, balance: 0, created_by: operatorId }).select().single();
+      if (error || !newTag) return false;
+      tag = newTag;
+    }
+    const newBalance = Number(tag.balance) + amount;
+    const { error: updateErr } = await supabase.from('tags').update({ balance: newBalance }).eq('id', tag.id);
+    if (updateErr) return false;
+
+    await supabase.from('transactions').insert({
+      tag_id: tag.id,
+      operator_id: operatorId,
+      amount,
+      type: 'courtesy',
+      payment_method: 'cortesia',
+      courtesy_name: courtesyName,
+      courtesy_role: courtesyRole,
     });
 
     await get().fetchTags();

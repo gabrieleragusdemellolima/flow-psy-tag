@@ -164,6 +164,8 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          courtesy_name: string | null
+          courtesy_role: string | null
           created_at: string
           id: string
           operator_id: string
@@ -173,6 +175,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          courtesy_name?: string | null
+          courtesy_role?: string | null
           created_at?: string
           id?: string
           operator_id: string
@@ -182,6 +186,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          courtesy_name?: string | null
+          courtesy_role?: string | null
           created_at?: string
           id?: string
           operator_id?: string

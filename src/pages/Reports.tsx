@@ -83,6 +83,8 @@ export default function Reports() {
   const totalRevenue = filteredSaleDetails.reduce((s, d) => s + d.unit_price * d.quantity, 0);
   const totalProfit = totalRevenue - totalCost;
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+  const totalCourtesy = filteredTransactions.filter(t => t.type === 'courtesy').reduce((s, t) => s + t.amount, 0);
+  const courtesyTransactions = filteredTransactions.filter(t => t.type === 'courtesy');
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
@@ -126,13 +128,14 @@ export default function Reports() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {[
           { label: 'Total Vendido', value: `R$ ${totalSales.toFixed(2)}`, glow: 'glow-primary' },
           { label: 'Total Carregado', value: `R$ ${totalLoaded.toFixed(2)}`, glow: 'glow-secondary' },
           { label: 'Saldo em Tags', value: `R$ ${totalBalance.toFixed(2)}`, glow: 'glow-primary' },
           { label: 'Custo Total', value: `R$ ${totalCost.toFixed(2)}`, glow: '' },
           { label: 'Lucro', value: `R$ ${totalProfit.toFixed(2)} (${profitMargin.toFixed(1)}%)`, glow: 'glow-secondary' },
+          { label: 'Consumação', value: `R$ ${totalCourtesy.toFixed(2)}`, glow: '' },
         ].map((s) => (
           <div key={s.label} className={`card-surface p-4 ${s.glow}`}>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</p>
@@ -192,6 +195,24 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Courtesy section */}
+      {courtesyTransactions.length > 0 && (
+        <div className="card-surface p-5">
+          <h3 className="font-display font-semibold text-sm mb-4">🎵 Consumação DJ / Staff ({courtesyTransactions.length})</h3>
+          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            {courtesyTransactions.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between p-3 bg-secondary/5 rounded-lg border border-secondary/10">
+                <div>
+                  <p className="text-sm font-medium">{(tx as any).courtesy_name || 'Sem nome'}</p>
+                  <span className="text-xs text-muted-foreground capitalize">{(tx as any).courtesy_role || ''} • {new Date(tx.created_at).toLocaleString('pt-BR')}</span>
+                </div>
+                <span className="font-mono font-semibold text-secondary">R$ {tx.amount.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Transaction log */}
       <div className="card-surface p-5">
         <h3 className="font-display font-semibold text-sm mb-4">Histórico ({filteredTransactions.length})</h3>
@@ -201,15 +222,22 @@ export default function Reports() {
           ) : filteredTransactions.map((tx) => (
             <div key={tx.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
               <div>
-                <span className={`text-xs font-medium uppercase tracking-wider ${tx.type === 'load' ? 'text-primary' : 'text-secondary'}`}>
-                  {tx.type === 'load' ? 'CARGA' : 'COMPRA'}
+                <span className={`text-xs font-medium uppercase tracking-wider ${
+                  tx.type === 'load' ? 'text-primary' : tx.type === 'courtesy' ? 'text-secondary' : 'text-accent'
+                }`}>
+                  {tx.type === 'load' ? 'CARGA' : tx.type === 'courtesy' ? 'CONSUMAÇÃO' : 'COMPRA'}
                 </span>
+                {tx.type === 'courtesy' && (tx as any).courtesy_name && (
+                  <span className="text-xs text-muted-foreground ml-2">{(tx as any).courtesy_name}</span>
+                )}
                 <p className="font-mono text-xs text-muted-foreground mt-0.5">
                   {new Date(tx.created_at).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <span className={`font-mono font-semibold ${tx.type === 'load' ? 'text-primary' : 'text-secondary'}`}>
-                {tx.type === 'load' ? '+' : '-'}R$ {tx.amount.toFixed(2)}
+              <span className={`font-mono font-semibold ${
+                tx.type === 'load' ? 'text-primary' : tx.type === 'courtesy' ? 'text-secondary' : 'text-accent'
+              }`}>
+                {tx.type === 'purchase' ? '-' : '+'}R$ {tx.amount.toFixed(2)}
               </span>
             </div>
           ))}
