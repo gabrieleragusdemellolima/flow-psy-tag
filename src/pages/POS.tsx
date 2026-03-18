@@ -27,6 +27,7 @@ export default function POS() {
   const [showError, setShowError] = useState('');
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showTag, setShowTag] = useState(false);
 
   useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
 
