@@ -14,6 +14,7 @@ interface SaleDetail {
   cost_price: number;
   operator_email: string;
   created_at: string;
+  sale_number: string | null;
 }
 
 export default function Reports() {
