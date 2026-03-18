@@ -145,6 +145,32 @@ export const useStore = create<AppStore>((set, get) => ({
     return true;
   },
 
+  loadTagCourtesy: async (tagCode, amount, operatorId, courtesyName, courtesyRole) => {
+    let { data: tag } = await supabase.from('tags').select('*').eq('tag_code', tagCode).single();
+    if (!tag) {
+      const { data: newTag, error } = await supabase.from('tags').insert({ tag_code: tagCode, balance: 0, created_by: operatorId }).select().single();
+      if (error || !newTag) return false;
+      tag = newTag;
+    }
+    const newBalance = Number(tag.balance) + amount;
+    const { error: updateErr } = await supabase.from('tags').update({ balance: newBalance }).eq('id', tag.id);
+    if (updateErr) return false;
+
+    await supabase.from('transactions').insert({
+      tag_id: tag.id,
+      operator_id: operatorId,
+      amount,
+      type: 'courtesy',
+      payment_method: 'cortesia',
+      courtesy_name: courtesyName,
+      courtesy_role: courtesyRole,
+    });
+
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
   processPayment: async (operatorId) => {
     const { cart, activeTag, cartTotal } = get();
     if (!activeTag || cart.length === 0) return false;
