@@ -88,6 +88,14 @@ export default function Reports() {
   const totalCourtesy = filteredTransactions.filter(t => t.type === 'courtesy').reduce((s, t) => s + t.amount, 0);
   const courtesyTransactions = filteredTransactions.filter(t => t.type === 'courtesy');
 
+  // Ticket & parking counters
+  const ingressosSold = filteredSaleDetails.filter(d => d.product_category === 'ingressos');
+  const estacionamentoSold = filteredSaleDetails.filter(d => d.product_category === 'estacionamento');
+  const ingressosCount = ingressosSold.reduce((s, d) => s + d.quantity, 0);
+  const estacionamentoCount = estacionamentoSold.reduce((s, d) => s + d.quantity, 0);
+  const ingressosRevenue = ingressosSold.reduce((s, d) => s + d.unit_price * d.quantity, 0);
+  const estacionamentoRevenue = estacionamentoSold.reduce((s, d) => s + d.unit_price * d.quantity, 0);
+
   // Category breakdown
   const categoryMap: Record<string, number> = {};
   filteredSaleDetails.forEach(d => {
