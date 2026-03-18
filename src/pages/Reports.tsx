@@ -83,6 +83,8 @@ export default function Reports() {
   const totalRevenue = filteredSaleDetails.reduce((s, d) => s + d.unit_price * d.quantity, 0);
   const totalProfit = totalRevenue - totalCost;
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+  const totalCourtesy = filteredTransactions.filter(t => t.type === 'courtesy').reduce((s, t) => s + t.amount, 0);
+  const courtesyTransactions = filteredTransactions.filter(t => t.type === 'courtesy');
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
