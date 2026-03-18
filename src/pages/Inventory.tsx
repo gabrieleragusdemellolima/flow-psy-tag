@@ -56,7 +56,7 @@ export default function Inventory() {
 
   const startEdit = (p: Product) => {
     setEditId(p.id);
-    setForm({ name: p.name, price: String(p.price), category: p.category, emoji: p.emoji, stock: String(p.stock), min_stock: String(p.min_stock) });
+    setForm({ name: p.name, price: String(p.price), cost_price: String(p.cost_price), category: p.category, emoji: p.emoji, stock: String(p.stock), min_stock: String(p.min_stock) });
   };
 
   return (
