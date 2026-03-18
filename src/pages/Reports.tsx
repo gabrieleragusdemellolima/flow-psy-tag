@@ -3,6 +3,8 @@ import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { generateReportPdf } from '@/lib/generateReportPdf';
+import { Download } from 'lucide-react';
 
 const COLORS = ['hsl(82,84%,67%)', 'hsl(270,70%,60%)', 'hsl(25,95%,60%)', 'hsl(200,80%,60%)'];
 
@@ -124,17 +126,31 @@ export default function Reports() {
           <h1 className="font-display text-2xl font-bold">Relatórios</h1>
           <p className="text-muted-foreground text-sm mt-1">Análise completa de vendas e carregamentos</p>
         </div>
-        {/* Operator filter */}
-        <select
-          value={filterOperator}
-          onChange={(e) => setFilterOperator(e.target.value)}
-          className="bg-muted/50 px-3 py-2 rounded-lg text-sm outline-none text-foreground"
-        >
-          <option value="all">Todos os Operadores</option>
-          {operators.map(op => (
-            <option key={op.id} value={op.id}>{op.email}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={filterOperator}
+            onChange={(e) => setFilterOperator(e.target.value)}
+            className="bg-muted/50 px-3 py-2 rounded-lg text-sm outline-none text-foreground"
+          >
+            <option value="all">Todos os Operadores</option>
+            {operators.map(op => (
+              <option key={op.id} value={op.id}>{op.email}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => generateReportPdf({
+              totalSales, totalLoaded, totalBalance, totalCost, totalRevenue,
+              totalProfit, profitMargin, totalCourtesy,
+              ingressosCount, ingressosRevenue, estacionamentoCount, estacionamentoRevenue,
+              categoryData, productData, operatorData,
+              courtesyTransactions: courtesyTransactions as any,
+              transactions: filteredTransactions,
+            })}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Download size={16} /> PDF
+          </button>
+        </div>
       </div>
 
       {/* Summary */}
