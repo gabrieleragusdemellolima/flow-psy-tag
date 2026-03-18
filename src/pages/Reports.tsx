@@ -135,6 +135,7 @@ export default function Reports() {
           { label: 'Saldo em Tags', value: `R$ ${totalBalance.toFixed(2)}`, glow: 'glow-primary' },
           { label: 'Custo Total', value: `R$ ${totalCost.toFixed(2)}`, glow: '' },
           { label: 'Lucro', value: `R$ ${totalProfit.toFixed(2)} (${profitMargin.toFixed(1)}%)`, glow: 'glow-secondary' },
+          { label: 'Consumação', value: `R$ ${totalCourtesy.toFixed(2)}`, glow: '' },
         ].map((s) => (
           <div key={s.label} className={`card-surface p-4 ${s.glow}`}>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</p>
