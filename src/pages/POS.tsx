@@ -27,6 +27,7 @@ export default function POS() {
   const [showError, setShowError] = useState('');
   const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showTag, setShowTag] = useState(false);
 
   useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
 
@@ -119,6 +120,12 @@ export default function POS() {
 
       {/* Cart sidebar */}
       <div className="w-full lg:w-80 card-surface p-4 flex flex-col">
+      <button onClick={() => setShowTag(!showTag)}
+        className="w-full card-surface-sm p-2 mb-4 flex items-center justify-between text-xs text-muted-foreground">
+        <span>{activeTag ? `🏷️ ${activeTag.tag_code} — R$ ${activeTag.balance.toFixed(2)}` : '📡 READY TO SCAN'}</span>
+        <span className="text-[10px]">{showTag ? '▲' : '▼'}</span>
+      </button>
+      {showTag && (
         <div className="card-surface-sm p-3 mb-4 text-center">
           {activeTag ? (
             <div>
@@ -137,6 +144,7 @@ export default function POS() {
             </div>
           )}
         </div>
+      )}
 
         <h3 className="font-display font-semibold text-sm mb-3">Carrinho</h3>
 
