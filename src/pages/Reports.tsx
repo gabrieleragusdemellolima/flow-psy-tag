@@ -126,11 +126,13 @@ export default function Reports() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { label: 'Total Vendido', value: `R$ ${totalSales.toFixed(2)}`, glow: 'glow-primary' },
           { label: 'Total Carregado', value: `R$ ${totalLoaded.toFixed(2)}`, glow: 'glow-secondary' },
           { label: 'Saldo em Tags', value: `R$ ${totalBalance.toFixed(2)}`, glow: 'glow-primary' },
+          { label: 'Custo Total', value: `R$ ${totalCost.toFixed(2)}`, glow: '' },
+          { label: 'Lucro', value: `R$ ${totalProfit.toFixed(2)} (${profitMargin.toFixed(1)}%)`, glow: 'glow-secondary' },
         ].map((s) => (
           <div key={s.label} className={`card-surface p-4 ${s.glow}`}>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</p>
