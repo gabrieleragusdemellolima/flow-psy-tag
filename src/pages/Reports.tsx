@@ -14,6 +14,7 @@ interface SaleDetail {
   cost_price: number;
   operator_email: string;
   created_at: string;
+  sale_number: string | null;
 }
 
 export default function Reports() {
@@ -36,7 +37,7 @@ export default function Reports() {
     const { data } = await supabase
       .from('sale_items')
       .select(`
-        quantity, unit_price, created_at,
+        quantity, unit_price, created_at, sale_number,
         product:products(name, category, cost_price),
         transaction:transactions(operator_id, created_at)
       `)
@@ -56,6 +57,7 @@ export default function Reports() {
         cost_price: Number(d.product?.cost_price || 0),
         operator_email: profileMap.get(d.transaction?.operator_id) || 'Unknown',
         created_at: d.transaction?.created_at || d.created_at,
+        sale_number: d.sale_number || null,
       })));
     }
   };
@@ -85,6 +87,14 @@ export default function Reports() {
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
   const totalCourtesy = filteredTransactions.filter(t => t.type === 'courtesy').reduce((s, t) => s + t.amount, 0);
   const courtesyTransactions = filteredTransactions.filter(t => t.type === 'courtesy');
+
+  // Ticket & parking counters
+  const ingressosSold = filteredSaleDetails.filter(d => d.product_category === 'ingressos');
+  const estacionamentoSold = filteredSaleDetails.filter(d => d.product_category === 'estacionamento');
+  const ingressosCount = ingressosSold.reduce((s, d) => s + d.quantity, 0);
+  const estacionamentoCount = estacionamentoSold.reduce((s, d) => s + d.quantity, 0);
+  const ingressosRevenue = ingressosSold.reduce((s, d) => s + d.unit_price * d.quantity, 0);
+  const estacionamentoRevenue = estacionamentoSold.reduce((s, d) => s + d.unit_price * d.quantity, 0);
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
@@ -142,6 +152,48 @@ export default function Reports() {
             <p className="font-mono text-xl font-bold mt-1">{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Ingressos & Estacionamento */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="card-surface p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🎫</span>
+            <div>
+              <h3 className="font-display font-semibold text-sm">Ingressos</h3>
+              <p className="text-xs text-muted-foreground">{ingressosCount} vendidos • R$ {ingressosRevenue.toFixed(2)}</p>
+            </div>
+          </div>
+          {ingressosSold.filter(d => d.sale_number).length > 0 && (
+            <div className="space-y-1 max-h-[150px] overflow-y-auto">
+              {ingressosSold.filter(d => d.sale_number).map((d, i) => (
+                <div key={i} className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded text-xs">
+                  <span className="font-mono font-semibold text-primary">{d.sale_number}</span>
+                  <span className="text-muted-foreground">{new Date(d.created_at).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="card-surface p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🅿️</span>
+            <div>
+              <h3 className="font-display font-semibold text-sm">Estacionamento</h3>
+              <p className="text-xs text-muted-foreground">{estacionamentoCount} vendidos • R$ {estacionamentoRevenue.toFixed(2)}</p>
+            </div>
+          </div>
+          {estacionamentoSold.filter(d => d.sale_number).length > 0 && (
+            <div className="space-y-1 max-h-[150px] overflow-y-auto">
+              {estacionamentoSold.filter(d => d.sale_number).map((d, i) => (
+                <div key={i} className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded text-xs">
+                  <span className="font-mono font-semibold text-secondary">{d.sale_number}</span>
+                  <span className="text-muted-foreground">{new Date(d.created_at).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
