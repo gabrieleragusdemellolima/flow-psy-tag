@@ -57,6 +57,7 @@ export default function Reports() {
         cost_price: Number(d.product?.cost_price || 0),
         operator_email: profileMap.get(d.transaction?.operator_id) || 'Unknown',
         created_at: d.transaction?.created_at || d.created_at,
+        sale_number: d.sale_number || null,
       })));
     }
   };
