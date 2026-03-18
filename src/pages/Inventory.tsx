@@ -118,11 +118,13 @@ export default function Inventory() {
             <motion.div key={product.id} layout className="card-surface-sm p-4 flex items-center gap-4">
               {editId === product.id && isAdmin ? (
                 <>
-                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2">
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground" />
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground" placeholder="Nome" />
                     <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number"
-                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" />
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" placeholder="Venda" />
+                    <input value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} type="number"
+                      className="bg-muted/50 px-2 py-1.5 rounded text-sm font-mono outline-none text-foreground" placeholder="Custo" />
                     <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Product['category'] })}
                       className="bg-muted/50 px-2 py-1.5 rounded text-sm outline-none text-foreground">
                       {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
