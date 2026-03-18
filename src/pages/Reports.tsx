@@ -37,7 +37,7 @@ export default function Reports() {
     const { data } = await supabase
       .from('sale_items')
       .select(`
-        quantity, unit_price, created_at,
+        quantity, unit_price, created_at, sale_number,
         product:products(name, category, cost_price),
         transaction:transactions(operator_id, created_at)
       `)
