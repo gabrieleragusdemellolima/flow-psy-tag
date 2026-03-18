@@ -148,7 +148,7 @@ export default function POS() {
 
         <h3 className="font-display font-semibold text-sm mb-3">Carrinho</h3>
 
-        <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-40 lg:max-h-none">
           {cart.length === 0 ? (
             <p className="text-muted-foreground text-xs text-center py-6">Selecione produtos</p>
           ) : cart.map((item) => (
