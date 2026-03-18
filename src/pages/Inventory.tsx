@@ -4,8 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Edit2, Check, X, Package, AlertTriangle, Shield } from 'lucide-react';
 
-const categoryOptions: Product['category'][] = ['bebidas', 'comidas', 'cigarros', 'doces'];
-const emojiMap: Record<string, string> = { bebidas: '🍺', comidas: '🍔', cigarros: '🚬', doces: '🍬' };
+const categoryOptions: Product['category'][] = ['bebidas', 'comidas', 'cigarros', 'doces', 'ingressos', 'estacionamento'];
+const emojiMap: Record<string, string> = { bebidas: '🍺', comidas: '🍔', cigarros: '🚬', doces: '🍬', ingressos: '🎫', estacionamento: '🅿️' };
 
 export default function Inventory() {
   const { products, addProduct, removeProduct, updateProduct, updateStock, fetchProducts } = useStore();

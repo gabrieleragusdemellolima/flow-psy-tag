@@ -6,7 +6,7 @@ export interface Product {
   name: string;
   price: number;
   cost_price: number;
-  category: 'bebidas' | 'comidas' | 'cigarros' | 'doces';
+  category: 'bebidas' | 'comidas' | 'cigarros' | 'doces' | 'ingressos' | 'estacionamento';
   emoji: string;
   stock: number;
   min_stock: number;
