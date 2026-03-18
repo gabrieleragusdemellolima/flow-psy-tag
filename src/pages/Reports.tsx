@@ -154,6 +154,48 @@ export default function Reports() {
         ))}
       </div>
 
+      {/* Ingressos & Estacionamento */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="card-surface p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🎫</span>
+            <div>
+              <h3 className="font-display font-semibold text-sm">Ingressos</h3>
+              <p className="text-xs text-muted-foreground">{ingressosCount} vendidos • R$ {ingressosRevenue.toFixed(2)}</p>
+            </div>
+          </div>
+          {ingressosSold.filter(d => d.sale_number).length > 0 && (
+            <div className="space-y-1 max-h-[150px] overflow-y-auto">
+              {ingressosSold.filter(d => d.sale_number).map((d, i) => (
+                <div key={i} className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded text-xs">
+                  <span className="font-mono font-semibold text-primary">{d.sale_number}</span>
+                  <span className="text-muted-foreground">{new Date(d.created_at).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="card-surface p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🅿️</span>
+            <div>
+              <h3 className="font-display font-semibold text-sm">Estacionamento</h3>
+              <p className="text-xs text-muted-foreground">{estacionamentoCount} vendidos • R$ {estacionamentoRevenue.toFixed(2)}</p>
+            </div>
+          </div>
+          {estacionamentoSold.filter(d => d.sale_number).length > 0 && (
+            <div className="space-y-1 max-h-[150px] overflow-y-auto">
+              {estacionamentoSold.filter(d => d.sale_number).map((d, i) => (
+                <div key={i} className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded text-xs">
+                  <span className="font-mono font-semibold text-secondary">{d.sale_number}</span>
+                  <span className="text-muted-foreground">{new Date(d.created_at).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="card-surface p-5">
           <h3 className="font-display font-semibold text-sm mb-4">Produtos Mais Vendidos</h3>
