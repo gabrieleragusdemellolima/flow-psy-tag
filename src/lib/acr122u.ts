@@ -54,7 +54,7 @@ export interface ACR122UReader {
 }
 
 export async function connectACR122U(): Promise<ACR122UReader> {
-  const device = await navigator.usb.requestDevice({
+  const device = await (navigator as any).usb.requestDevice({
     filters: [{ vendorId: ACR122U_VENDOR_ID }],
   });
 
