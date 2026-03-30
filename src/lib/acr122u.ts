@@ -171,5 +171,5 @@ export function pollForTag(
 }
 
 export function isWebUSBSupported(): boolean {
-  return !!navigator.usb;
+  return !!(navigator as any).usb;
 }
