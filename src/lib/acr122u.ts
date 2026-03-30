@@ -48,7 +48,7 @@ function uidToHex(bytes: Uint8Array): string {
 }
 
 export interface ACR122UReader {
-  device: USBDevice;
+  device: any; // USBDevice
   endpointIn: number;
   endpointOut: number;
 }
