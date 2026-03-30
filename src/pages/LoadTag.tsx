@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Banknote, QrCode, Smartphone, CheckCircle2, Usb, UsbOff, Wifi } from 'lucide-react';
+import { CreditCard, Banknote, QrCode, Smartphone, CheckCircle2, Usb, Unplug, Wifi } from 'lucide-react';
 import { connectACR122U, disconnectACR122U, pollForTag, isWebUSBSupported, type ACR122UReader } from '@/lib/acr122u';
 import { toast } from 'sonner';
 
