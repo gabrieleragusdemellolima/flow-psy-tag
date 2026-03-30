@@ -143,7 +143,7 @@ export default function LoadTag() {
               {readerConnected ? (
                 <Usb className="text-primary" size={20} />
               ) : (
-                <UsbOff className="text-muted-foreground" size={20} />
+                <Unplug className="text-muted-foreground" size={20} />
               )}
               <div>
                 <p className="text-sm font-medium text-foreground">ACR122U</p>
