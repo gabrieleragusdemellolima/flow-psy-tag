@@ -266,6 +266,55 @@ export const useStore = create<AppStore>((set, get) => ({
     return true;
   },
 
+  processPaymentCustomer: async (customerId, operatorId) => {
+    const { cart, cartTotal } = get();
+    if (cart.length === 0) return false;
+
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+
+    const total = cartTotal();
+    if (total > Number(customer.balance)) return false;
+
+    const newBalance = Number(customer.balance) - total;
+    const { error: updateErr } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (updateErr) return false;
+
+    // Also deduct from linked tag
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        const tagNewBalance = Math.max(0, Number(tag.balance) - total);
+        await supabase.from('tags').update({ balance: tagNewBalance }).eq('id', tag.id);
+      }
+    }
+
+    const { data: tx, error: txErr } = await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount: total,
+      type: 'purchase',
+    }).select().single();
+    if (txErr || !tx) return false;
+
+    for (const item of cart) {
+      await supabase.from('sale_items').insert({
+        transaction_id: tx.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+      });
+      const newStock = Math.max(0, item.product.stock - item.quantity);
+      await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id);
+    }
+
+    set({ cart: [] });
+    await get().fetchProducts();
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
   addProduct: async (product, userId) => {
     await supabase.from('products').insert({ ...product, created_by: userId });
     await get().fetchProducts();
