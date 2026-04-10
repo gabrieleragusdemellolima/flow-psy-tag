@@ -65,7 +65,10 @@ interface AppStore {
   
   loadTag: (tagCode: string, amount: number, paymentMethod: string, operatorId: string) => Promise<boolean>;
   loadTagCourtesy: (tagCode: string, amount: number, operatorId: string, courtesyName: string, courtesyRole: string) => Promise<boolean>;
+  loadCustomer: (customerId: string, amount: number, paymentMethod: string, operatorId: string) => Promise<boolean>;
+  loadCustomerCourtesy: (customerId: string, amount: number, operatorId: string, courtesyName: string, courtesyRole: string) => Promise<boolean>;
   processPayment: (operatorId: string) => Promise<boolean>;
+  processPaymentCustomer: (customerId: string, operatorId: string) => Promise<boolean>;
 
   addProduct: (product: Omit<Product, 'id' | 'active'>, userId: string) => Promise<void>;
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
