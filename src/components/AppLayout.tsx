@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User, Shield, Users, Music } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, LogOut, User, Shield, Users, Music, ScanFace } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
@@ -12,7 +12,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/load-tag', icon: CreditCard, label: 'Carregar Tag' },
+    { to: '/customers', icon: ScanFace, label: 'Clientes' },
+    { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
     { to: '/pos', icon: ShoppingCart, label: 'PDV' },
     { to: '/inventory', icon: Package, label: 'Produtos' },
     { to: '/reports', icon: BarChart3, label: 'Relatórios' },
