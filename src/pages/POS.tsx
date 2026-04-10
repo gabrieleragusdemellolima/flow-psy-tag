@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useStore, type Product } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, X, CheckCircle2, AlertTriangle, Smartphone } from 'lucide-react';
+import { Minus, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 
 const categories = [
   { id: 'all', label: 'Todos', emoji: '✨' },
@@ -18,40 +19,59 @@ export default function POS() {
   const {
     products, cart, addToCart, removeFromCart, updateQuantity,
     clearCart, cartTotal, tags, activeTag, setActiveTag,
-    processPayment, isDemoMode, fetchProducts, fetchTags,
+    processPayment, processPaymentCustomer, isDemoMode, fetchProducts, fetchTags,
   } = useStore();
   const { user } = useAuth();
 
   const [filter, setFilter] = useState<string>('all');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState('');
-  const [scanning, setScanning] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [showTag, setShowTag] = useState(false);
+  const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
 
   useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
   const total = cartTotal();
 
-  const handleSimulateScan = () => {
-    setScanning(true);
-    setTimeout(() => {
-      const tag = tags[Math.floor(Math.random() * tags.length)];
+  const currentBalance = identifier?.type === 'face'
+    ? Number(identifier.customer?.balance || 0)
+    : identifier?.type === 'tag'
+      ? (tags.find(t => t.tag_code === identifier.tagCode)?.balance || activeTag?.balance || 0)
+      : 0;
+
+  const handleIdentify = (id: CustomerIdentifier) => {
+    setIdentifier(id);
+    if (id.type === 'tag' && id.tagCode) {
+      const tag = tags.find(t => t.tag_code === id.tagCode);
       if (tag) setActiveTag(tag);
-      setScanning(false);
-    }, 1000);
+    }
+  };
+
+  const handleSimulateScan = () => {
+    const tag = tags[Math.floor(Math.random() * tags.length)];
+    if (tag) {
+      setActiveTag(tag);
+      setIdentifier({ type: 'tag', tagCode: tag.tag_code });
+    }
   };
 
   const handlePay = async () => {
-    if (!activeTag || cart.length === 0 || !user) return;
-    if (total > activeTag.balance) {
-      setShowError(`SALDO INSUFICIENTE // R$ ${activeTag.balance.toFixed(2)} disponível`);
+    if (!identifier || cart.length === 0 || !user) return;
+    if (total > currentBalance) {
+      setShowError(`SALDO INSUFICIENTE // R$ ${currentBalance.toFixed(2)} disponível`);
       setTimeout(() => setShowError(''), 3000);
       return;
     }
     setProcessing(true);
-    const ok = await processPayment(user.id);
+
+    let ok = false;
+    if (identifier.type === 'face' && identifier.customer) {
+      ok = await processPaymentCustomer(identifier.customer.id, user.id);
+    } else if (identifier.type === 'tag' && activeTag) {
+      ok = await processPayment(user.id);
+    }
+
     setProcessing(false);
 
     if (ok) {
@@ -71,7 +91,7 @@ export default function POS() {
         }, 120);
       } catch {}
       setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setActiveTag(null); }, 2000);
+      setTimeout(() => { setShowSuccess(false); setIdentifier(null); setActiveTag(null); }, 2000);
     }
   };
 
@@ -119,70 +139,55 @@ export default function POS() {
       </div>
 
       {/* Cart sidebar */}
-      <div className="w-full lg:w-80 card-surface p-4 flex flex-col">
-      <button onClick={() => setShowTag(!showTag)}
-        className="w-full card-surface-sm p-2 mb-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>{activeTag ? `🏷️ ${activeTag.tag_code} — R$ ${activeTag.balance.toFixed(2)}` : '📡 READY TO SCAN'}</span>
-        <span className="text-[10px]">{showTag ? '▲' : '▼'}</span>
-      </button>
-      {showTag && (
-        <div className="card-surface-sm p-3 mb-4 text-center">
-          {activeTag ? (
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Tag Conectada</p>
-              <p className="font-mono text-sm text-primary font-bold">{activeTag.tag_code}</p>
-              <p className="font-mono text-lg text-primary">R$ {activeTag.balance.toFixed(2)}</p>
-            </div>
-          ) : (
-            <div>
-              <Smartphone className="mx-auto text-muted-foreground mb-1" size={20} />
-              <p className="text-xs text-muted-foreground">{scanning ? 'Escaneando...' : 'READY TO SCAN'}</p>
-              {isDemoMode && (
-                <button onClick={handleSimulateScan} disabled={scanning}
-                  className="mt-2 text-xs text-secondary underline disabled:opacity-50">Simular Tag</button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="w-full lg:w-80 flex flex-col gap-3">
+        <IdentifyCustomer
+          identifier={identifier}
+          onIdentify={handleIdentify}
+          onClear={() => { setIdentifier(null); setActiveTag(null); }}
+          tagBalance={activeTag?.balance}
+          isDemoMode={isDemoMode}
+          onSimulateTag={handleSimulateScan}
+        />
 
-        <h3 className="font-display font-semibold text-sm mb-3">Carrinho</h3>
+        <div className="card-surface p-4 flex flex-col flex-1">
+          <h3 className="font-display font-semibold text-sm mb-3">Carrinho</h3>
 
-        <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-40 lg:max-h-none">
-          {cart.length === 0 ? (
-            <p className="text-muted-foreground text-xs text-center py-6">Selecione produtos</p>
-          ) : cart.map((item) => (
-            <div key={item.product.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.product.emoji} {item.product.name}</p>
-                <p className="font-mono text-xs text-muted-foreground">R$ {item.product.price.toFixed(2)}</p>
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-40 lg:max-h-none">
+            {cart.length === 0 ? (
+              <p className="text-muted-foreground text-xs text-center py-6">Selecione produtos</p>
+            ) : cart.map((item) => (
+              <div key={item.product.id} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{item.product.emoji} {item.product.name}</p>
+                  <p className="font-mono text-xs text-muted-foreground">R$ {item.product.price.toFixed(2)}</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                    className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Minus size={12} /></button>
+                  <span className="font-mono text-sm w-6 text-center">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Plus size={12} /></button>
+                  <button onClick={() => removeFromCart(item.product.id)}
+                    className="w-7 h-7 flex items-center justify-center text-accent hover:bg-accent/10 rounded"><X size={12} /></button>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                  className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Minus size={12} /></button>
-                <span className="font-mono text-sm w-6 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                  className="w-7 h-7 flex items-center justify-center bg-muted/50 rounded text-foreground"><Plus size={12} /></button>
-                <button onClick={() => removeFromCart(item.product.id)}
-                  className="w-7 h-7 flex items-center justify-center text-accent hover:bg-accent/10 rounded"><X size={12} /></button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-border/50">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <span className="font-mono text-3xl font-bold text-primary">R$ {total.toFixed(2)}</span>
+            ))}
           </div>
-          <motion.button whileTap={{ scale: 0.97 }} onClick={handlePay}
-            disabled={!activeTag || cart.length === 0 || processing}
-            className="w-full py-4 bg-primary text-primary-foreground rounded-lg font-display font-bold text-base glow-primary disabled:opacity-30 disabled:shadow-none transition-all">
-            {processing ? 'PROCESSANDO...' : activeTag ? 'CONFIRMAR PAGAMENTO' : 'TAP TAG TO PAY'}
-          </motion.button>
-          {cart.length > 0 && (
-            <button onClick={clearCart} className="w-full mt-2 py-2 text-xs text-muted-foreground hover:text-accent transition-colors">Limpar carrinho</button>
-          )}
+
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="font-mono text-3xl font-bold text-primary">R$ {total.toFixed(2)}</span>
+            </div>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={handlePay}
+              disabled={!identifier || cart.length === 0 || processing}
+              className="w-full py-4 bg-primary text-primary-foreground rounded-lg font-display font-bold text-base glow-primary disabled:opacity-30 disabled:shadow-none transition-all">
+              {processing ? 'PROCESSANDO...' : identifier ? 'CONFIRMAR PAGAMENTO' : 'IDENTIFIQUE O CLIENTE'}
+            </motion.button>
+            {cart.length > 0 && (
+              <button onClick={clearCart} className="w-full mt-2 py-2 text-xs text-muted-foreground hover:text-accent transition-colors">Limpar carrinho</button>
+            )}
+          </div>
         </div>
       </div>
     </div>

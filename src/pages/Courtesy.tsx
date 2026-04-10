@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Smartphone, CheckCircle2, Shield } from 'lucide-react';
+import { Music, CheckCircle2, Shield } from 'lucide-react';
+import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 
 const quickAmounts = [50, 100, 150, 200];
 const roleLabels = [
@@ -13,15 +14,15 @@ const roleLabels = [
 ];
 
 export default function Courtesy() {
-  const { tags, loadTagCourtesy, fetchTags, isDemoMode } = useStore();
+  const { tags, loadTagCourtesy, loadCustomerCourtesy, fetchTags, isDemoMode } = useStore();
   const { user, isAdmin } = useAuth();
-  const [tagCode, setTagCode] = useState('');
   const [amount, setAmount] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [recipientRole, setRecipientRole] = useState('dj');
   const [showSuccess, setShowSuccess] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
 
   useEffect(() => { if (user) fetchTags(); }, [user]);
 
@@ -31,29 +32,34 @@ export default function Courtesy() {
       const code = tags.length > 0
         ? tags[Math.floor(Math.random() * tags.length)].tag_code
         : `TAG-${String(Date.now()).slice(-4)}`;
-      setTagCode(code);
+      setIdentifier({ type: 'tag', tagCode: code });
       setScanning(false);
     }, 1200);
   };
 
   const handleLoad = async () => {
     const val = parseFloat(amount);
-    if (!tagCode || isNaN(val) || val <= 0 || !user || !recipientName) return;
+    if (!identifier || isNaN(val) || val <= 0 || !user || !recipientName) return;
     setLoading(true);
-    const ok = await loadTagCourtesy(tagCode, val, user.id, recipientName, recipientRole);
+
+    let ok = false;
+    if (identifier.type === 'face' && identifier.customer) {
+      ok = await loadCustomerCourtesy(identifier.customer.id, val, user.id, recipientName, recipientRole);
+    } else if (identifier.type === 'tag' && identifier.tagCode) {
+      ok = await loadTagCourtesy(identifier.tagCode, val, user.id, recipientName, recipientRole);
+    }
+
     setLoading(false);
     if (ok) {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         setAmount('');
-        setTagCode('');
+        setIdentifier(null);
         setRecipientName('');
       }, 2000);
     }
   };
-
-  const existingTag = tags.find((t) => t.tag_code === tagCode);
 
   if (!isAdmin) {
     return (
@@ -83,7 +89,7 @@ export default function Courtesy() {
               <CheckCircle2 className="text-secondary mx-auto mb-3" size={64} />
               <p className="font-display text-xl font-bold text-secondary">CONSUMAÇÃO ADICIONADA</p>
               <p className="font-mono text-2xl mt-2">R$ {parseFloat(amount).toFixed(2)}</p>
-              <p className="text-muted-foreground text-sm mt-1">{recipientName} • {tagCode}</p>
+              <p className="text-muted-foreground text-sm mt-1">{recipientName}</p>
             </motion.div>
           </motion.div>
         )}
@@ -92,11 +98,9 @@ export default function Courtesy() {
       {/* Recipient info */}
       <div className="card-surface p-5 space-y-4">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quem recebe</label>
-        <input
-          type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
+        <input type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
           placeholder="Nome (ex: DJ Fulano)"
-          className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-secondary/50 text-foreground placeholder:text-muted-foreground"
-        />
+          className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-secondary/50 text-foreground placeholder:text-muted-foreground" />
         <div className="grid grid-cols-4 gap-2">
           {roleLabels.map(({ id, label }) => (
             <motion.button key={id} whileTap={{ scale: 0.95 }} onClick={() => setRecipientRole(id)}
@@ -108,28 +112,17 @@ export default function Courtesy() {
         </div>
       </div>
 
-      {/* Tag scan */}
-      <div className="card-surface p-5 text-center">
-        <Smartphone className="mx-auto text-muted-foreground mb-3" size={32} />
-        {tagCode ? (
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Tag Detectada</p>
-            <p className="font-mono text-xl text-secondary font-bold mt-1">{tagCode}</p>
-            {existingTag && <p className="font-mono text-sm text-muted-foreground mt-1">Saldo: R$ {existingTag.balance.toFixed(2)}</p>}
-            <button onClick={() => setTagCode('')} className="text-xs text-muted-foreground underline mt-2">Trocar tag</button>
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm text-muted-foreground mb-3">{scanning ? 'Procurando tag...' : 'Aproxime a tag do leitor'}</p>
-            {isDemoMode && (
-              <motion.button whileTap={{ scale: 0.96 }} onClick={handleSimulateScan} disabled={scanning}
-                className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium text-sm glow-secondary disabled:opacity-50">
-                {scanning ? <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ repeat: Infinity, duration: 1 }}>ESCANEANDO...</motion.span> : 'SIMULAR SCAN NFC'}
-              </motion.button>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Identify Customer */}
+      <IdentifyCustomer
+        identifier={identifier}
+        onIdentify={setIdentifier}
+        onClear={() => setIdentifier(null)}
+        tagBalance={identifier?.type === 'tag' ? tags.find(t => t.tag_code === identifier.tagCode)?.balance : undefined}
+        isDemoMode={isDemoMode}
+        onSimulateTag={handleSimulateScan}
+        scanning={scanning}
+        accentColor="secondary"
+      />
 
       {/* Amount */}
       <div className="card-surface p-5 space-y-4">
@@ -147,7 +140,7 @@ export default function Courtesy() {
       </div>
 
       <motion.button whileTap={{ scale: 0.97 }} onClick={handleLoad}
-        disabled={!tagCode || !amount || parseFloat(amount) <= 0 || !recipientName || loading}
+        disabled={!identifier || !amount || parseFloat(amount) <= 0 || !recipientName || loading}
         className="w-full py-4 bg-secondary text-secondary-foreground rounded-lg font-display font-bold text-lg glow-secondary disabled:opacity-30 disabled:shadow-none transition-all">
         {loading ? 'PROCESSANDO...' : 'CONFIRMAR CONSUMAÇÃO'}
       </motion.button>
