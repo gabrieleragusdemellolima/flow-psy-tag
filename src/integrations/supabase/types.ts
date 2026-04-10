@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          active: boolean
+          balance: number
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          tag_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          tag_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          tag_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
