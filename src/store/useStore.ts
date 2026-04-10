@@ -65,7 +65,10 @@ interface AppStore {
   
   loadTag: (tagCode: string, amount: number, paymentMethod: string, operatorId: string) => Promise<boolean>;
   loadTagCourtesy: (tagCode: string, amount: number, operatorId: string, courtesyName: string, courtesyRole: string) => Promise<boolean>;
+  loadCustomer: (customerId: string, amount: number, paymentMethod: string, operatorId: string) => Promise<boolean>;
+  loadCustomerCourtesy: (customerId: string, amount: number, operatorId: string, courtesyName: string, courtesyRole: string) => Promise<boolean>;
   processPayment: (operatorId: string) => Promise<boolean>;
+  processPaymentCustomer: (customerId: string, operatorId: string) => Promise<boolean>;
 
   addProduct: (product: Omit<Product, 'id' | 'active'>, userId: string) => Promise<void>;
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
@@ -171,6 +174,57 @@ export const useStore = create<AppStore>((set, get) => ({
     return true;
   },
 
+  loadCustomer: async (customerId, amount, paymentMethod, operatorId) => {
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+    const newBalance = Number(customer.balance) + amount;
+    const { error } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (error) return false;
+    // Also load linked tag if exists
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        await supabase.from('tags').update({ balance: Number(tag.balance) + amount }).eq('id', tag.id);
+      }
+    }
+    await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount,
+      type: 'load',
+      payment_method: paymentMethod,
+    });
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
+  loadCustomerCourtesy: async (customerId, amount, operatorId, courtesyName, courtesyRole) => {
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+    const newBalance = Number(customer.balance) + amount;
+    const { error } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (error) return false;
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        await supabase.from('tags').update({ balance: Number(tag.balance) + amount }).eq('id', tag.id);
+      }
+    }
+    await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount,
+      type: 'courtesy',
+      payment_method: 'cortesia',
+      courtesy_name: courtesyName,
+      courtesy_role: courtesyRole,
+    });
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
   processPayment: async (operatorId) => {
     const { cart, activeTag, cartTotal } = get();
     if (!activeTag || cart.length === 0) return false;
@@ -206,6 +260,55 @@ export const useStore = create<AppStore>((set, get) => ({
     }
 
     set({ activeTag: { ...activeTag, balance: newBalance }, cart: [] });
+    await get().fetchProducts();
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
+  processPaymentCustomer: async (customerId, operatorId) => {
+    const { cart, cartTotal } = get();
+    if (cart.length === 0) return false;
+
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+
+    const total = cartTotal();
+    if (total > Number(customer.balance)) return false;
+
+    const newBalance = Number(customer.balance) - total;
+    const { error: updateErr } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (updateErr) return false;
+
+    // Also deduct from linked tag
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        const tagNewBalance = Math.max(0, Number(tag.balance) - total);
+        await supabase.from('tags').update({ balance: tagNewBalance }).eq('id', tag.id);
+      }
+    }
+
+    const { data: tx, error: txErr } = await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount: total,
+      type: 'purchase',
+    }).select().single();
+    if (txErr || !tx) return false;
+
+    for (const item of cart) {
+      await supabase.from('sale_items').insert({
+        transaction_id: tx.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+      });
+      const newStock = Math.max(0, item.product.stock - item.quantity);
+      await supabase.from('products').update({ stock: newStock }).eq('id', item.product.id);
+    }
+
+    set({ cart: [] });
     await get().fetchProducts();
     await get().fetchTags();
     await get().fetchTransactions();
