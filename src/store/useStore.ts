@@ -174,6 +174,57 @@ export const useStore = create<AppStore>((set, get) => ({
     return true;
   },
 
+  loadCustomer: async (customerId, amount, paymentMethod, operatorId) => {
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+    const newBalance = Number(customer.balance) + amount;
+    const { error } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (error) return false;
+    // Also load linked tag if exists
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        await supabase.from('tags').update({ balance: Number(tag.balance) + amount }).eq('id', tag.id);
+      }
+    }
+    await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount,
+      type: 'load',
+      payment_method: paymentMethod,
+    });
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
+  loadCustomerCourtesy: async (customerId, amount, operatorId, courtesyName, courtesyRole) => {
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!customer) return false;
+    const newBalance = Number(customer.balance) + amount;
+    const { error } = await supabase.from('customers').update({ balance: newBalance }).eq('id', customerId);
+    if (error) return false;
+    if (customer.tag_id) {
+      const { data: tag } = await supabase.from('tags').select('*').eq('id', customer.tag_id).single();
+      if (tag) {
+        await supabase.from('tags').update({ balance: Number(tag.balance) + amount }).eq('id', tag.id);
+      }
+    }
+    await supabase.from('transactions').insert({
+      tag_id: customer.tag_id,
+      operator_id: operatorId,
+      amount,
+      type: 'courtesy',
+      payment_method: 'cortesia',
+      courtesy_name: courtesyName,
+      courtesy_role: courtesyRole,
+    });
+    await get().fetchTags();
+    await get().fetchTransactions();
+    return true;
+  },
+
   processPayment: async (operatorId) => {
     const { cart, activeTag, cartTotal } = get();
     if (!activeTag || cart.length === 0) return false;
