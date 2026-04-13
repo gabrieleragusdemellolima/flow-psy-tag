@@ -1,6 +1,7 @@
 /**
  * ACR122U NFC Reader - WebUSB Driver
  * Communicates with ACR122U via WebUSB using CCID/APDU protocol.
+ * Includes Mifare Classic block read/write support.
  */
 
 const ACR122U_VENDOR_ID = 0x072f;
@@ -257,4 +258,151 @@ export function pollForTag(
   return () => {
     running = false;
   };
+}
+
+// ── Mifare Classic APDU Commands ──────────────────────────────────
+
+export type MifareKeyType = 'A' | 'B';
+
+async function sendAPDU(reader: ACR122UReader, apdu: number[]): Promise<Uint8Array> {
+  const ccidMsg = buildCCID(PC_TO_RDR_XFRBLOCK, apdu);
+  await reader.device.transferOut(reader.endpointOut, ccidMsg);
+  const result = await reader.device.transferIn(reader.endpointIn, 64);
+  if (!result.data || result.data.byteLength < 12) {
+    throw new Error('Resposta CCID vazia ou muito curta');
+  }
+  const parsed = parseCCIDResponse(result.data);
+  if (parsed.status !== 0) {
+    throw new Error(`Erro CCID status=${parsed.status}`);
+  }
+  return parsed.payload;
+}
+
+function checkSW(payload: Uint8Array, context: string) {
+  if (payload.length < 2) throw new Error(`${context}: resposta muito curta`);
+  const sw1 = payload[payload.length - 2];
+  const sw2 = payload[payload.length - 1];
+  if (sw1 !== 0x90 || sw2 !== 0x00) {
+    throw new Error(`${context}: falhou (SW=${sw1.toString(16)}${sw2.toString(16)})`);
+  }
+}
+
+/**
+ * Load a 6-byte authentication key into the reader's volatile memory.
+ * keySlot: 0x00 or 0x01
+ */
+export async function mifareLoadKey(
+  reader: ACR122UReader,
+  key: number[],
+  keySlot = 0x00
+): Promise<void> {
+  if (key.length !== 6) throw new Error('Chave Mifare deve ter 6 bytes');
+  // FF 82 00 {slot} 06 {key[0..5]}
+  const apdu = [0xff, 0x82, 0x00, keySlot, 0x06, ...key];
+  const resp = await sendAPDU(reader, apdu);
+  checkSW(resp, 'LoadKey');
+}
+
+/**
+ * Authenticate a Mifare Classic block using a previously loaded key.
+ */
+export async function mifareAuthenticate(
+  reader: ACR122UReader,
+  blockNumber: number,
+  keyType: MifareKeyType = 'A',
+  keySlot = 0x00
+): Promise<void> {
+  const keyTypeCode = keyType === 'A' ? 0x60 : 0x61;
+  // FF 86 00 00 05 {01 00 block keyType keySlot}
+  const apdu = [0xff, 0x86, 0x00, 0x00, 0x05, 0x01, 0x00, blockNumber, keyTypeCode, keySlot];
+  const resp = await sendAPDU(reader, apdu);
+  checkSW(resp, 'Authenticate');
+}
+
+/**
+ * Read 16 bytes from a Mifare Classic block.
+ * Must authenticate the sector first.
+ */
+export async function mifareReadBlock(
+  reader: ACR122UReader,
+  blockNumber: number
+): Promise<Uint8Array> {
+  // FF B0 00 {block} 10
+  const apdu = [0xff, 0xb0, 0x00, blockNumber, 0x10];
+  const resp = await sendAPDU(reader, apdu);
+  checkSW(resp, 'ReadBlock');
+  return resp.slice(0, resp.length - 2);
+}
+
+/**
+ * Write 16 bytes to a Mifare Classic block.
+ * Must authenticate the sector first.
+ * WARNING: Do NOT write to sector trailer blocks (3, 7, 11, …) unless you know what you're doing.
+ */
+export async function mifareWriteBlock(
+  reader: ACR122UReader,
+  blockNumber: number,
+  data: number[]
+): Promise<void> {
+  if (data.length !== 16) throw new Error('Dados para escrita devem ter exatamente 16 bytes');
+  // FF D6 00 {block} 10 {data[0..15]}
+  const apdu = [0xff, 0xd6, 0x00, blockNumber, 0x10, ...data];
+  const resp = await sendAPDU(reader, apdu);
+  checkSW(resp, 'WriteBlock');
+}
+
+/**
+ * Default Mifare Classic factory key (FF FF FF FF FF FF).
+ */
+export const MIFARE_DEFAULT_KEY = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+
+/**
+ * High-level: authenticate + read a block using the default key.
+ */
+export async function mifareReadBlockWithKey(
+  reader: ACR122UReader,
+  blockNumber: number,
+  key: number[] = MIFARE_DEFAULT_KEY,
+  keyType: MifareKeyType = 'A'
+): Promise<Uint8Array> {
+  await mifareLoadKey(reader, key);
+  await mifareAuthenticate(reader, blockNumber, keyType);
+  return mifareReadBlock(reader, blockNumber);
+}
+
+/**
+ * High-level: authenticate + write a block using the default key.
+ */
+export async function mifareWriteBlockWithKey(
+  reader: ACR122UReader,
+  blockNumber: number,
+  data: number[],
+  key: number[] = MIFARE_DEFAULT_KEY,
+  keyType: MifareKeyType = 'A'
+): Promise<void> {
+  await mifareLoadKey(reader, key);
+  await mifareAuthenticate(reader, blockNumber, keyType);
+  await mifareWriteBlock(reader, blockNumber, data);
+}
+
+/**
+ * Encode a balance value (number) into a 16-byte block.
+ * Format: 4-byte little-endian integer (centavos) + 4-byte inverted + 4-byte copy + 4 zeros.
+ */
+export function encodeBalance(reais: number): number[] {
+  const centavos = Math.round(reais * 100);
+  const buf = new ArrayBuffer(4);
+  new DataView(buf).setUint32(0, centavos, true);
+  const bytes = Array.from(new Uint8Array(buf));
+  const inverted = bytes.map((b) => b ^ 0xff);
+  return [...bytes, ...inverted, ...bytes, 0x00, 0x00, 0x00, 0x00];
+}
+
+/**
+ * Decode a balance from a 16-byte block written by encodeBalance.
+ */
+export function decodeBalance(block: Uint8Array): number {
+  if (block.length < 4) return 0;
+  const centavos = new DataView(block.buffer, block.byteOffset).getUint32(0, true);
+  return centavos / 100;
 }
