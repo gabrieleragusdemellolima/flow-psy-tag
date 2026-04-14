@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Shield, UserPlus, Trash2, Users, Crown } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Shield, Users, Crown } from 'lucide-react';
 
 interface UserWithRole {
   user_id: string;
@@ -13,19 +11,16 @@ interface UserWithRole {
 }
 
 export default function Admin() {
-  const { isAdmin, user } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAdmin) loadUsers();
-  }, [isAdmin]);
+    loadUsers();
+  }, []);
 
   const loadUsers = async () => {
     setLoading(true);
-    // Get all profiles
     const { data: profiles } = await supabase.from('profiles').select('user_id, email, display_name');
-    // Get all roles
     const { data: roles } = await supabase.from('user_roles').select('user_id, role');
 
     if (profiles) {
@@ -41,19 +36,13 @@ export default function Admin() {
   };
 
   const toggleAdmin = async (userId: string, currentRole: string | null) => {
-    if (userId === user?.id) return; // Can't remove own admin
-
     if (currentRole === 'admin') {
-      // Remove admin role
       await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'admin');
     } else {
-      // Add admin role
       await supabase.from('user_roles').insert({ user_id: userId, role: 'admin' });
     }
     await loadUsers();
   };
-
-  if (!isAdmin) return <Navigate to="/" replace />;
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
@@ -90,22 +79,16 @@ export default function Admin() {
                   <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                 </div>
 
-                {u.user_id !== user?.id && (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => toggleAdmin(u.user_id, u.role)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
-                      ${u.role === 'admin'
-                        ? 'bg-accent/10 text-accent hover:bg-accent/20'
-                        : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
-                  >
-                    {u.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
-                  </motion.button>
-                )}
-
-                {u.user_id === user?.id && (
-                  <span className="text-xs text-muted-foreground font-mono">VOCÊ</span>
-                )}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => toggleAdmin(u.user_id, u.role)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
+                    ${u.role === 'admin'
+                      ? 'bg-accent/10 text-accent hover:bg-accent/20'
+                      : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                >
+                  {u.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                </motion.button>
               </motion.div>
             ))}
           </div>
