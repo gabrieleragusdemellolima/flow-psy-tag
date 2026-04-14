@@ -1,18 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Banknote, QrCode, CheckCircle2, Usb, Unplug, Wifi, AlertTriangle } from 'lucide-react';
-import {
-  connectACR122U,
-  disconnectACR122U,
-  pollForTag,
-  isWebUSBSupported,
-  getACR122UErrorInfo,
-  type ACR122UReader,
-  type ACR122UErrorInfo,
-} from '@/lib/acr122u';
+import { CreditCard, Banknote, QrCode, CheckCircle2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 
 const paymentMethods = [
