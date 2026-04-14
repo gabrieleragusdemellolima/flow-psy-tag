@@ -1,18 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Banknote, QrCode, CheckCircle2, Usb, Unplug, Wifi, AlertTriangle } from 'lucide-react';
-import {
-  connectACR122U,
-  disconnectACR122U,
-  pollForTag,
-  isWebUSBSupported,
-  getACR122UErrorInfo,
-  type ACR122UReader,
-  type ACR122UErrorInfo,
-} from '@/lib/acr122u';
+import { CreditCard, Banknote, QrCode, CheckCircle2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 
 const paymentMethods = [
@@ -30,65 +22,24 @@ export default function LoadTag() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [readerConnected, setReaderConnected] = useState(false);
-  const [readerPolling, setReaderPolling] = useState(false);
-  const [readerError, setReaderError] = useState<ACR122UErrorInfo | null>(null);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
 
-  const readerRef = useRef<ACR122UReader | null>(null);
-  const stopPollingRef = useRef<(() => void) | null>(null);
-  const webUSBSupported = isWebUSBSupported();
+  const handleTagRead = useCallback((uid: string) => {
+    setIdentifier({ type: 'tag', tagCode: uid });
+    toast.success(`Tag detectada: ${uid}`);
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 1200; gain.gain.value = 0.08;
+      osc.start(); osc.stop(ctx.currentTime + 0.1);
+    } catch {}
+  }, []);
+
+  const nfc = useNfcBridge(handleTagRead);
 
   useEffect(() => { if (user) fetchTags(); }, [user, fetchTags]);
-  useEffect(() => {
-    return () => {
-      stopPollingRef.current?.();
-      if (readerRef.current) void disconnectACR122U(readerRef.current);
-    };
-  }, []);
-
-  const handleConnectReader = useCallback(async () => {
-    setReaderError(null);
-    try {
-      const reader = await connectACR122U();
-      readerRef.current = reader;
-      setReaderConnected(true);
-      setReaderPolling(true);
-      toast.success('ACR122U conectado com sucesso!');
-
-      const stop = pollForTag(reader, (uid) => {
-        setIdentifier({ type: 'tag', tagCode: uid });
-        toast.success(`Tag detectada: ${uid}`);
-        try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain); gain.connect(ctx.destination);
-          osc.frequency.value = 1200; gain.gain.value = 0.08;
-          osc.start(); osc.stop(ctx.currentTime + 0.1);
-        } catch {}
-      }, 400);
-      stopPollingRef.current = stop;
-    } catch (error) {
-      const info = getACR122UErrorInfo(error);
-      setReaderConnected(false);
-      setReaderPolling(false);
-      setReaderError(info);
-      toast.error(info.title, { description: info.message });
-    }
-  }, []);
-
-  const handleDisconnectReader = useCallback(async () => {
-    stopPollingRef.current?.();
-    stopPollingRef.current = null;
-    if (readerRef.current) {
-      await disconnectACR122U(readerRef.current);
-      readerRef.current = null;
-    }
-    setReaderConnected(false);
-    setReaderPolling(false);
-    toast.info('Leitor desconectado');
-  }, []);
 
   const handleSimulateScan = () => {
     setScanning(true);
@@ -140,7 +91,7 @@ export default function LoadTag() {
     <div className="max-w-xl mx-auto space-y-6 pb-20 md:pb-0">
       <div>
         <h1 className="font-display text-2xl font-bold">Carregar Saldo</h1>
-        <p className="text-muted-foreground text-sm mt-1">Adicionar créditos via Tag ou Face Scan</p>
+        <p className="text-muted-foreground text-sm mt-1">Adicionar créditos via Tag NFC ou Face Scan</p>
       </div>
 
       <AnimatePresence>
@@ -157,51 +108,51 @@ export default function LoadTag() {
         )}
       </AnimatePresence>
 
-      {/* ACR122U Reader */}
-      {webUSBSupported && (
-        <div className="card-surface p-4 space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              {readerConnected ? (
-                <Usb className="text-primary shrink-0" size={20} />
-              ) : (
-                <Unplug className="text-muted-foreground shrink-0" size={20} />
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">ACR122U</p>
-                <p className="text-xs text-muted-foreground">
-                  {readerConnected ? (readerPolling ? '🟢 Lendo tags' : 'Conectado') : 'Desconectado'}
-                </p>
-              </div>
-            </div>
-            {readerConnected ? (
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleDisconnectReader}
-                className="px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-xs font-medium hover:bg-destructive/20 transition-colors">
-                Desconectar
-              </motion.button>
+      {/* NFC Bridge WebSocket */}
+      <div className="card-surface p-4 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {nfc.connected ? (
+              <Wifi className="text-primary shrink-0" size={20} />
             ) : (
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleConnectReader}
-                className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors glow-primary">
-                Conectar Leitor
-              </motion.button>
+              <WifiOff className="text-muted-foreground shrink-0" size={20} />
             )}
-          </div>
-          {readerError && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="text-destructive shrink-0 mt-0.5" size={18} />
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">{readerError.title}</p>
-                  <p className="text-sm text-muted-foreground">{readerError.message}</p>
-                </div>
-              </div>
-              <ol className="space-y-1 pl-5 text-xs text-muted-foreground list-decimal">
-                {readerError.steps.map((step) => (<li key={step}>{step}</li>))}
-              </ol>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">NFC Bridge</p>
+              <p className="text-xs text-muted-foreground">
+                {nfc.connected ? '🟢 Conectado — aguardando tags' : 'Desconectado'}
+              </p>
             </div>
+          </div>
+          {nfc.connected ? (
+            <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.disconnect}
+              className="px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-xs font-medium hover:bg-destructive/20 transition-colors">
+              Desconectar
+            </motion.button>
+          ) : (
+            <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.connect}
+              className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors glow-primary">
+              Conectar
+            </motion.button>
           )}
         </div>
-      )}
+        {nfc.error && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-destructive shrink-0 mt-0.5" size={18} />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">Erro de conexão</p>
+                <p className="text-sm text-muted-foreground">{nfc.error}</p>
+              </div>
+            </div>
+            <ol className="space-y-1 pl-5 text-xs text-muted-foreground list-decimal">
+              <li>Verifique se o servidor NFC Bridge está rodando na porta 8888</li>
+              <li>Execute o script nfc-bridge antes de conectar</li>
+              <li>Certifique-se que o leitor ACR122U está conectado ao PC</li>
+            </ol>
+          </div>
+        )}
+      </div>
 
       {/* Identify Customer */}
       <IdentifyCustomer
@@ -212,7 +163,7 @@ export default function LoadTag() {
         isDemoMode={isDemoMode}
         onSimulateTag={handleSimulateScan}
         scanning={scanning}
-        readerConnected={readerConnected}
+        readerConnected={nfc.connected}
       />
 
       {/* Amount */}
