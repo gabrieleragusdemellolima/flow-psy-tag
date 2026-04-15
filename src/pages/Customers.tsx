@@ -33,6 +33,7 @@ export default function Customers() {
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string>('');
+  const [tagCode, setTagCode] = useState('');
   const [useTag, setUseTag] = useState(false);
 
   useEffect(() => {
@@ -80,11 +81,28 @@ export default function Customers() {
         photo_url = urlData.publicUrl;
       }
 
+      // Find or create tag by code
+      let finalTagId: string | null = null;
+      if (useTag && tagCode.trim()) {
+        const existing = tags.find((t) => t.tag_code.toLowerCase() === tagCode.trim().toLowerCase());
+        if (existing) {
+          finalTagId = existing.id;
+        } else {
+          const { data: newTag, error: tagErr } = await supabase
+            .from('tags')
+            .insert({ tag_code: tagCode.trim().toUpperCase(), created_by: user.id })
+            .select('id')
+            .single();
+          if (tagErr) throw tagErr;
+          finalTagId = newTag.id;
+        }
+      }
+
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
         phone: phone.trim() || null,
         photo_url,
-        tag_id: useTag && selectedTagId ? selectedTagId : null,
+        tag_id: finalTagId,
         created_by: user.id,
       });
 
@@ -97,6 +115,7 @@ export default function Customers() {
       setPhotoBlob(null);
       setPhotoPreview(null);
       setSelectedTagId('');
+      setTagCode('');
       setUseTag(false);
       setShowForm(false);
       fetchCustomers();
@@ -213,18 +232,13 @@ export default function Customers() {
                   </label>
                 </div>
                 {useTag && (
-                  <select
-                    value={selectedTagId}
-                    onChange={(e) => setSelectedTagId(e.target.value)}
-                    className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                  >
-                    <option value="">Selecione uma tag...</option>
-                    {tags.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.tag_code} — R$ {t.balance.toFixed(2)}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    value={tagCode}
+                    onChange={(e) => setTagCode(e.target.value.toUpperCase())}
+                    placeholder="Digite o código da tag (ex: AB12CD34)"
+                    className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
                 )}
               </div>
 
