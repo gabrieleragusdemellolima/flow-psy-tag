@@ -37,7 +37,7 @@ export default function LoadTag() {
     } catch {}
   }, []);
 
-  const nfc = useNfcBridge(handleTagRead);
+  const nfc = useNfcBridge(handleTagRead, undefined, false);
 
   useEffect(() => { if (user) fetchTags(); }, [user, fetchTags]);
 

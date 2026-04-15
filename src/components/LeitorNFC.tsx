@@ -7,7 +7,7 @@ interface LeitorNFCProps {
 }
 
 export default function LeitorNFC({ onTagRead, autoConnect = true }: LeitorNFCProps) {
-  const { connected, lastUid, error, connect, disconnect } = useNfcBridge(onTagRead, autoConnect);
+  const { connected, lastUid, error, connect, disconnect } = useNfcBridge(onTagRead, undefined, autoConnect);
 
   return (
     <div className="card-surface p-4 space-y-3">
