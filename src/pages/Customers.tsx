@@ -33,6 +33,7 @@ export default function Customers() {
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedTagId, setSelectedTagId] = useState<string>('');
+  const [tagCode, setTagCode] = useState('');
   const [useTag, setUseTag] = useState(false);
 
   useEffect(() => {
