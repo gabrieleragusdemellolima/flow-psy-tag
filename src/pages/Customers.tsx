@@ -81,11 +81,28 @@ export default function Customers() {
         photo_url = urlData.publicUrl;
       }
 
+      // Find or create tag by code
+      let finalTagId: string | null = null;
+      if (useTag && tagCode.trim()) {
+        const existing = tags.find((t) => t.tag_code.toLowerCase() === tagCode.trim().toLowerCase());
+        if (existing) {
+          finalTagId = existing.id;
+        } else {
+          const { data: newTag, error: tagErr } = await supabase
+            .from('tags')
+            .insert({ tag_code: tagCode.trim().toUpperCase(), created_by: user.id })
+            .select('id')
+            .single();
+          if (tagErr) throw tagErr;
+          finalTagId = newTag.id;
+        }
+      }
+
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
         phone: phone.trim() || null,
         photo_url,
-        tag_id: useTag && selectedTagId ? selectedTagId : null,
+        tag_id: finalTagId,
         created_by: user.id,
       });
 
