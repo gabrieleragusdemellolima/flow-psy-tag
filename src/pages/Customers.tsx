@@ -232,18 +232,13 @@ export default function Customers() {
                   </label>
                 </div>
                 {useTag && (
-                  <select
-                    value={selectedTagId}
-                    onChange={(e) => setSelectedTagId(e.target.value)}
-                    className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                  >
-                    <option value="">Selecione uma tag...</option>
-                    {tags.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.tag_code} — R$ {t.balance.toFixed(2)}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    value={tagCode}
+                    onChange={(e) => setTagCode(e.target.value.toUpperCase())}
+                    placeholder="Digite o código da tag (ex: AB12CD34)"
+                    className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
                 )}
               </div>
 
