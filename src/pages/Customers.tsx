@@ -115,6 +115,7 @@ export default function Customers() {
       setPhotoBlob(null);
       setPhotoPreview(null);
       setSelectedTagId('');
+      setTagCode('');
       setUseTag(false);
       setShowForm(false);
       fetchCustomers();
