@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Camera, Search, Phone, ScanFace, Tag } from 'lucide-react';
-import CameraCapture from '@/components/CameraCapture';
+import { UserPlus, Search, Phone, Users as UsersIcon, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStore } from '@/store/useStore';
 
@@ -11,7 +10,6 @@ interface Customer {
   id: string;
   name: string;
   phone: string | null;
-  photo_url: string | null;
   tag_id: string | null;
   balance: number;
   active: boolean;
@@ -23,16 +21,10 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Form state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
-  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [selectedTagId, setSelectedTagId] = useState<string>('');
   const [tagCode, setTagCode] = useState('');
   const [useTag, setUseTag] = useState(false);
 
@@ -52,36 +44,11 @@ export default function Customers() {
     if (data) setCustomers(data as Customer[]);
   };
 
-  const handlePhotoCapture = (base64: string, blob: Blob) => {
-    setPhotoBase64(base64);
-    setPhotoBlob(blob);
-    setPhotoPreview(`data:image/jpeg;base64,${base64}`);
-    setShowCamera(false);
-  };
-
   const handleSubmit = async () => {
     if (!name.trim() || !user) return;
     setLoading(true);
 
     try {
-      let photo_url: string | null = null;
-
-      // Upload photo if captured
-      if (photoBlob) {
-        const fileName = `${Date.now()}-${crypto.randomUUID()}.jpg`;
-        const { error: uploadErr } = await supabase.storage
-          .from('customer-photos')
-          .upload(fileName, photoBlob, { contentType: 'image/jpeg' });
-
-        if (uploadErr) throw uploadErr;
-
-        const { data: urlData } = supabase.storage
-          .from('customer-photos')
-          .getPublicUrl(fileName);
-        photo_url = urlData.publicUrl;
-      }
-
-      // Find or create tag by code
       let finalTagId: string | null = null;
       if (useTag && tagCode.trim()) {
         const existing = tags.find((t) => t.tag_code.toLowerCase() === tagCode.trim().toLowerCase());
@@ -101,7 +68,6 @@ export default function Customers() {
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
         phone: phone.trim() || null,
-        photo_url,
         tag_id: finalTagId,
         created_by: user.id,
       });
@@ -111,10 +77,6 @@ export default function Customers() {
       toast.success('Cliente cadastrado com sucesso!');
       setName('');
       setPhone('');
-      setPhotoBase64(null);
-      setPhotoBlob(null);
-      setPhotoPreview(null);
-      setSelectedTagId('');
       setTagCode('');
       setUseTag(false);
       setShowForm(false);
@@ -138,9 +100,9 @@ export default function Customers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <ScanFace size={24} className="text-secondary" /> Clientes
+            <UsersIcon size={24} className="text-secondary" /> Clientes
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Cadastro com foto para Face Scan</p>
+          <p className="text-muted-foreground text-sm mt-1">Cadastro e vinculação de Tag NFC</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -151,7 +113,6 @@ export default function Customers() {
         </motion.button>
       </div>
 
-      {/* Registration Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -161,35 +122,6 @@ export default function Customers() {
             className="overflow-hidden"
           >
             <div className="card-surface p-5 space-y-4">
-              {/* Photo */}
-              <div className="flex flex-col items-center gap-3">
-                {photoPreview ? (
-                  <div className="relative">
-                    <img
-                      src={photoPreview}
-                      alt="Foto"
-                      className="w-28 h-28 rounded-full object-cover border-2 border-primary/30"
-                    />
-                    <button
-                      onClick={() => setShowCamera(true)}
-                      className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full"
-                    >
-                      <Camera size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowCamera(true)}
-                    className="w-28 h-28 rounded-full bg-muted/30 border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 hover:border-primary/50 transition-colors"
-                  >
-                    <Camera size={24} className="text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">FOTO</span>
-                  </motion.button>
-                )}
-              </div>
-
-              {/* Name */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome *</label>
                 <input
@@ -201,7 +133,6 @@ export default function Customers() {
                 />
               </div>
 
-              {/* Phone */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Telefone</label>
                 <div className="relative mt-1">
@@ -216,7 +147,6 @@ export default function Customers() {
                 </div>
               </div>
 
-              {/* Tag (optional) */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <button
@@ -255,7 +185,6 @@ export default function Customers() {
         )}
       </AnimatePresence>
 
-      {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -267,23 +196,18 @@ export default function Customers() {
         />
       </div>
 
-      {/* Customer list */}
       <div className="space-y-2">
         {filtered.length === 0 ? (
           <div className="card-surface p-8 text-center">
-            <ScanFace size={32} className="mx-auto text-muted-foreground mb-3" />
+            <UsersIcon size={32} className="mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-sm">Nenhum cliente cadastrado</p>
           </div>
         ) : (
           filtered.map((c) => (
             <div key={c.id} className="card-surface-sm p-3 flex items-center gap-3">
-              {c.photo_url ? (
-                <img src={c.photo_url} alt={c.name} className="w-12 h-12 rounded-full object-cover" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
-                  <ScanFace size={20} />
-                </div>
-              )}
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+                <UsersIcon size={20} />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -298,8 +222,6 @@ export default function Customers() {
           ))
         )}
       </div>
-
-      <CameraCapture open={showCamera} onCapture={handlePhotoCapture} onCancel={() => setShowCamera(false)} />
     </div>
   );
 }
