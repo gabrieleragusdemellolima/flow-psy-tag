@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore, type Product } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useOperator } from '@/hooks/useOperator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
@@ -22,6 +23,7 @@ export default function POS() {
     processPayment, processPaymentCustomer, isDemoMode, fetchProducts, fetchTags,
   } = useStore();
   const { user } = useAuth();
+  const { operator } = useOperator();
 
   const [filter, setFilter] = useState<string>('all');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -67,9 +69,9 @@ export default function POS() {
 
     let ok = false;
     if (identifier.type === 'face' && identifier.customer) {
-      ok = await processPaymentCustomer(identifier.customer.id, user.id);
+      ok = await processPaymentCustomer(identifier.customer.id, user.id, operator?.name, operator?.number);
     } else if (identifier.type === 'tag' && activeTag) {
-      ok = await processPayment(user.id);
+      ok = await processPayment(user.id, operator?.name, operator?.number);
     }
 
     setProcessing(false);

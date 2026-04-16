@@ -1,12 +1,14 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, ScanFace } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, ScanFace, UserCircle2, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { useOperator } from '@/hooks/useOperator';
 import { motion } from 'framer-motion';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isDemoMode = useStore((s) => s.isDemoMode);
   const toggleDemoMode = useStore((s) => s.toggleDemoMode);
+  const { operator, clearOperator } = useOperator();
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -44,6 +46,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-3 lg:p-4 space-y-2">
+          {operator && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 border border-border/50">
+              <UserCircle2 size={18} className="text-primary shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground truncate">{operator.name}</p>
+                <p className="text-[10px] text-muted-foreground font-mono">#{operator.number}</p>
+              </div>
+              <button onClick={clearOperator} title="Trocar operador"
+                className="text-muted-foreground hover:text-destructive transition-colors">
+                <LogOut size={14} />
+              </button>
+            </div>
+          )}
+          {operator && (
+            <button onClick={clearOperator}
+              className="lg:hidden flex items-center justify-center gap-1 w-full px-2 py-2 rounded-lg bg-muted/40 text-[10px] text-muted-foreground hover:text-destructive">
+              <UserCircle2 size={14} />
+              <span className="font-mono">#{operator.number}</span>
+            </button>
+          )}
           <button onClick={toggleDemoMode}
             className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-xs font-medium transition-all
               ${isDemoMode ? 'bg-accent/10 text-accent glow-accent' : 'bg-muted text-muted-foreground'}`}>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useOperator } from '@/hooks/useOperator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Banknote, QrCode, CheckCircle2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ const quickAmounts = [20, 50, 100, 200];
 export default function LoadTag() {
   const { tags, loadTag, loadCustomer, fetchTags, isDemoMode } = useStore();
   const { user } = useAuth();
+  const { operator } = useOperator();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -59,9 +61,9 @@ export default function LoadTag() {
 
     let ok = false;
     if (identifier.type === 'face' && identifier.customer) {
-      ok = await loadCustomer(identifier.customer.id, val, paymentMethod, user.id);
+      ok = await loadCustomer(identifier.customer.id, val, paymentMethod, user.id, operator?.name, operator?.number);
     } else if (identifier.type === 'tag' && identifier.tagCode) {
-      ok = await loadTag(identifier.tagCode, val, paymentMethod, user.id);
+      ok = await loadTag(identifier.tagCode, val, paymentMethod, user.id, operator?.name, operator?.number);
     }
 
     setLoading(false);
