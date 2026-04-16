@@ -1,12 +1,14 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, ScanFace } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, ScanFace, UserCircle2, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { useOperator } from '@/hooks/useOperator';
 import { motion } from 'framer-motion';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isDemoMode = useStore((s) => s.isDemoMode);
   const toggleDemoMode = useStore((s) => s.toggleDemoMode);
+  const { operator, clearOperator } = useOperator();
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
