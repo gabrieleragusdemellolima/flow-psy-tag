@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/customers', icon: ScanFace, label: 'Clientes' },
+    { to: '/customers', icon: Users, label: 'Clientes' },
     { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
     { to: '/pos', icon: ShoppingCart, label: 'PDV' },
     { to: '/inventory', icon: Package, label: 'Produtos' },
