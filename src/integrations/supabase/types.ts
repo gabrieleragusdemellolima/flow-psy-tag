@@ -219,6 +219,8 @@ export type Database = {
           created_at: string
           id: string
           operator_id: string
+          operator_name: string | null
+          operator_number: string | null
           payment_method: string | null
           tag_id: string | null
           type: string
@@ -230,6 +232,8 @@ export type Database = {
           created_at?: string
           id?: string
           operator_id: string
+          operator_name?: string | null
+          operator_number?: string | null
           payment_method?: string | null
           tag_id?: string | null
           type: string
@@ -241,6 +245,8 @@ export type Database = {
           created_at?: string
           id?: string
           operator_id?: string
+          operator_name?: string | null
+          operator_number?: string | null
           payment_method?: string | null
           tag_id?: string | null
           type?: string
