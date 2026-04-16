@@ -43,9 +43,7 @@ export default function Courtesy() {
     setLoading(true);
 
     let ok = false;
-    if (identifier.type === 'face' && identifier.customer) {
-      ok = await loadCustomerCourtesy(identifier.customer.id, val, user.id, recipientName, recipientRole);
-    } else if (identifier.type === 'tag' && identifier.tagCode) {
+    if (identifier.type === 'tag' && identifier.tagCode) {
       ok = await loadTagCourtesy(identifier.tagCode, val, user.id, recipientName, recipientRole);
     }
 

@@ -36,11 +36,9 @@ export default function POS() {
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
   const total = cartTotal();
 
-  const currentBalance = identifier?.type === 'face'
-    ? Number(identifier.customer?.balance || 0)
-    : identifier?.type === 'tag'
-      ? (tags.find(t => t.tag_code === identifier.tagCode)?.balance || activeTag?.balance || 0)
-      : 0;
+  const currentBalance = identifier?.type === 'tag'
+    ? (tags.find(t => t.tag_code === identifier.tagCode)?.balance || activeTag?.balance || 0)
+    : 0;
 
   const handleIdentify = (id: CustomerIdentifier) => {
     setIdentifier(id);
@@ -68,9 +66,7 @@ export default function POS() {
     setProcessing(true);
 
     let ok = false;
-    if (identifier.type === 'face' && identifier.customer) {
-      ok = await processPaymentCustomer(identifier.customer.id, user.id, operator?.name, operator?.number);
-    } else if (identifier.type === 'tag' && activeTag) {
+    if (identifier.type === 'tag' && activeTag) {
       ok = await processPayment(user.id, operator?.name, operator?.number);
     }
 

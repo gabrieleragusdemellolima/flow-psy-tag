@@ -60,9 +60,7 @@ export default function LoadTag() {
     setLoading(true);
 
     let ok = false;
-    if (identifier.type === 'face' && identifier.customer) {
-      ok = await loadCustomer(identifier.customer.id, val, paymentMethod, user.id, operator?.name, operator?.number);
-    } else if (identifier.type === 'tag' && identifier.tagCode) {
+    if (identifier.type === 'tag' && identifier.tagCode) {
       ok = await loadTag(identifier.tagCode, val, paymentMethod, user.id, operator?.name, operator?.number);
     }
 
