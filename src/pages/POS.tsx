@@ -118,19 +118,23 @@ export default function POS() {
       </AnimatePresence>
 
       {/* Product grid */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+      <div className="flex-[2] lg:flex-1 flex flex-col min-h-[55vh] lg:min-h-0">
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
           {categories.map((c) => (
             <motion.button key={c.id} whileTap={{ scale: 0.95 }} onClick={() => setFilter(c.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-                ${filter === c.id ? 'bg-secondary/20 text-secondary glow-secondary' : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'}`}>
-              <span>{c.emoji}</span> {c.label}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all border
+                ${filter === c.id
+                  ? 'bg-secondary/20 text-secondary border-secondary/50 glow-secondary'
+                  : 'bg-muted/20 text-muted-foreground border-transparent hover:bg-muted/40'}`}>
+              <span className="text-base leading-none">{c.emoji}</span> {c.label}
             </motion.button>
           ))}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto flex-1 pr-1">
-          {filtered.map((product) => (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 overflow-y-auto flex-1 pr-1 pb-2 content-start">
+          {filtered.length === 0 ? (
+            <p className="col-span-full text-center text-muted-foreground text-sm py-10">Nenhum produto nesta categoria</p>
+          ) : filtered.map((product) => (
             <ProductCard key={product.id} product={product} onAdd={addToCart} />
           ))}
         </div>
