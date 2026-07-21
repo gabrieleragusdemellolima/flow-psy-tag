@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Search, Phone, Users as UsersIcon, Tag } from 'lucide-react';
+import { UserPlus, Search, Phone, Users as UsersIcon, Tag, Mail, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStore } from '@/store/useStore';
 
@@ -10,6 +10,8 @@ interface Customer {
   id: string;
   name: string;
   phone: string | null;
+  email: string | null;
+  document: string | null;
   tag_id: string | null;
   balance: number;
   active: boolean;
@@ -25,8 +27,11 @@ export default function Customers() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [document, setDocument] = useState('');
   const [tagCode, setTagCode] = useState('');
   const [useTag, setUseTag] = useState(false);
+
 
   useEffect(() => {
     if (user) {
@@ -68,15 +73,19 @@ export default function Customers() {
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
         phone: phone.trim() || null,
+        email: email.trim() || null,
+        document: document.trim() || null,
         tag_id: finalTagId,
         created_by: user.id,
-      });
+      } as never);
 
       if (error) throw error;
 
       toast.success('Cliente cadastrado com sucesso!');
       setName('');
       setPhone('');
+      setEmail('');
+      setDocument('');
       setTagCode('');
       setUseTag(false);
       setShowForm(false);
@@ -91,7 +100,9 @@ export default function Customers() {
   const filtered = search
     ? customers.filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone?.includes(search)
+        c.phone?.includes(search) ||
+        c.email?.toLowerCase().includes(search.toLowerCase()) ||
+        c.document?.includes(search)
       )
     : customers;
 
@@ -142,6 +153,34 @@ export default function Customers() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="(11) 99999-9999"
+                    className="w-full bg-muted/50 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</label>
+                <div className="relative mt-1">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="cliente@email.com"
+                    className="w-full bg-muted/50 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Documento (CPF/RG)</label>
+                <div className="relative mt-1">
+                  <IdCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={document}
+                    onChange={(e) => setDocument(e.target.value)}
+                    placeholder="000.000.000-00"
                     className="w-full bg-muted/50 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
@@ -210,8 +249,10 @@ export default function Customers() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                   {c.phone && <span>{c.phone}</span>}
+                  {c.email && <span className="truncate">{c.email}</span>}
+                  {c.document && <span>Doc: {c.document}</span>}
                   {c.tag_id && <span className="text-primary">🏷️ Tag</span>}
                 </div>
               </div>
