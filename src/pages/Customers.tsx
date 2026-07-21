@@ -249,8 +249,10 @@ export default function Customers() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                   {c.phone && <span>{c.phone}</span>}
+                  {c.email && <span className="truncate">{c.email}</span>}
+                  {c.document && <span>Doc: {c.document}</span>}
                   {c.tag_id && <span className="text-primary">🏷️ Tag</span>}
                 </div>
               </div>
