@@ -20,6 +20,8 @@ export type Database = {
           balance: number
           created_at: string
           created_by: string | null
+          document: string | null
+          email: string | null
           id: string
           name: string
           phone: string | null
@@ -32,6 +34,8 @@ export type Database = {
           balance?: number
           created_at?: string
           created_by?: string | null
+          document?: string | null
+          email?: string | null
           id?: string
           name: string
           phone?: string | null
@@ -44,6 +48,8 @@ export type Database = {
           balance?: number
           created_at?: string
           created_by?: string | null
+          document?: string | null
+          email?: string | null
           id?: string
           name?: string
           phone?: string | null
