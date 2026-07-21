@@ -73,15 +73,19 @@ export default function Customers() {
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
         phone: phone.trim() || null,
+        email: email.trim() || null,
+        document: document.trim() || null,
         tag_id: finalTagId,
         created_by: user.id,
-      });
+      } as never);
 
       if (error) throw error;
 
       toast.success('Cliente cadastrado com sucesso!');
       setName('');
       setPhone('');
+      setEmail('');
+      setDocument('');
       setTagCode('');
       setUseTag(false);
       setShowForm(false);
