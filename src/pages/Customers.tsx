@@ -27,8 +27,11 @@ export default function Customers() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [document, setDocument] = useState('');
   const [tagCode, setTagCode] = useState('');
   const [useTag, setUseTag] = useState(false);
+
 
   useEffect(() => {
     if (user) {
