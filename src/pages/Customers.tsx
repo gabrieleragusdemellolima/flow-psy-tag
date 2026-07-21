@@ -100,7 +100,9 @@ export default function Customers() {
   const filtered = search
     ? customers.filter((c) =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone?.includes(search)
+        c.phone?.includes(search) ||
+        c.email?.toLowerCase().includes(search.toLowerCase()) ||
+        c.document?.includes(search)
       )
     : customers;
 
