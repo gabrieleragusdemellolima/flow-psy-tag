@@ -198,19 +198,25 @@ export default function POS() {
 
 function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product) => void }) {
   const lowStock = product.stock <= product.min_stock;
+  const out = product.stock <= 0;
   return (
-    <motion.button whileTap={{ scale: 0.96 }} onClick={() => onAdd(product)}
-      disabled={product.stock <= 0}
-      className={`card-surface-sm aspect-square flex flex-col items-center justify-center gap-2 p-3 transition-all group relative
-        ${product.stock <= 0 ? 'opacity-40' : 'hover:bg-muted/30'}`}>
-      {lowStock && product.stock > 0 && (
-        <span className="absolute top-2 right-2 text-[10px] font-mono text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+    <motion.button whileTap={{ scale: 0.94 }} onClick={() => onAdd(product)}
+      disabled={out}
+      className={`card-surface-sm flex flex-col items-center justify-between gap-1 p-2.5 min-h-[110px] sm:min-h-[130px] transition-all group relative overflow-hidden
+        ${out ? 'opacity-40' : 'hover:bg-muted/30 hover:border-primary/50 active:scale-[0.97]'}`}>
+      {lowStock && !out && (
+        <span className="absolute top-1 right-1 text-[9px] font-mono text-accent bg-accent/20 px-1.5 py-0.5 rounded-full leading-none">
           {product.stock}
         </span>
       )}
-      <span className="text-4xl group-hover:scale-110 transition-transform">{product.emoji}</span>
-      <span className="text-sm font-medium text-foreground text-center leading-tight">{product.name}</span>
-      <span className="font-mono text-primary font-semibold text-sm">R$ {product.price.toFixed(2)}</span>
+      {out && (
+        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-[10px] font-mono text-accent bg-accent/10 py-0.5 text-center uppercase tracking-wider">
+          esgotado
+        </span>
+      )}
+      <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform leading-none mt-1">{product.emoji}</span>
+      <span className="text-[11px] sm:text-xs font-medium text-foreground text-center leading-tight line-clamp-2 px-0.5">{product.name}</span>
+      <span className="font-mono text-primary font-bold text-xs sm:text-sm">R$ {product.price.toFixed(2)}</span>
     </motion.button>
   );
 }
