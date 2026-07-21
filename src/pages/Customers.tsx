@@ -10,6 +10,8 @@ interface Customer {
   id: string;
   name: string;
   phone: string | null;
+  email: string | null;
+  document: string | null;
   tag_id: string | null;
   balance: number;
   active: boolean;
