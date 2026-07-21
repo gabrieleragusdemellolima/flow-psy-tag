@@ -159,6 +159,34 @@ export default function Customers() {
               </div>
 
               <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</label>
+                <div className="relative mt-1">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="cliente@email.com"
+                    className="w-full bg-muted/50 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Documento (CPF/RG)</label>
+                <div className="relative mt-1">
+                  <IdCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={document}
+                    onChange={(e) => setDocument(e.target.value)}
+                    placeholder="000.000.000-00"
+                    className="w-full bg-muted/50 pl-10 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div>
                 <div className="flex items-center gap-2 mb-2">
                   <button
                     onClick={() => setUseTag(!useTag)}
