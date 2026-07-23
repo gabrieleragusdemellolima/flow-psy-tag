@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, UserCircle2, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useOperator } from '@/hooks/useOperator';
+import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -9,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isDemoMode = useStore((s) => s.isDemoMode);
   const toggleDemoMode = useStore((s) => s.toggleDemoMode);
   const { operator, clearOperator } = useOperator();
+  const { isAdmin } = useAuth();
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,7 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { to: '/inventory', icon: Package, label: 'Produtos' },
     { to: '/reports', icon: BarChart3, label: 'Relatórios' },
     { to: '/courtesy', icon: Music, label: 'Consumação' },
-    { to: '/admin', icon: Users, label: 'Admin' },
+    ...(isAdmin ? [{ to: '/admin', icon: Users, label: 'Admin' }] : []),
   ];
 
   return (
