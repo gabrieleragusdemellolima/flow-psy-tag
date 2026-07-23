@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
 import OperatorGate from "@/components/OperatorGate";
-import { OperatorProvider } from "@/hooks/useOperator";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import LoadTag from "./pages/LoadTag";
 import POS from "./pages/POS";
@@ -23,7 +23,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <OperatorProvider>
+      <AuthProvider>
         <OperatorGate>
           <BrowserRouter>
             <AppLayout>
@@ -41,7 +41,7 @@ const App = () => (
             </AppLayout>
           </BrowserRouter>
         </OperatorGate>
-      </OperatorProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
