@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 
 export default function Login() {
   const handleGoogleLogin = async () => {
-    await lovable.auth.signInWithOAuth('google');
+    await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
+      extraParams: { prompt: 'select_account' },
+    });
   };
 
   return (
@@ -40,7 +43,7 @@ export default function Login() {
         </motion.button>
 
         <p className="text-xs text-muted-foreground">
-          Acesso exclusivo para operadores do festival
+          Acesso exclusivo com conta <span className="text-primary font-mono">@gmail.com</span> autorizada pelo Admin
         </p>
       </motion.div>
     </div>
