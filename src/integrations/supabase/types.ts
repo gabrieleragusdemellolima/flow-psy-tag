@@ -67,6 +67,45 @@ export type Database = {
           },
         ]
       }
+      operator_invites: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string
+          email: string
+          id: string
+          operator_number: string
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          email: string
+          id?: string
+          operator_number: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          email?: string
+          id?: string
+          operator_number?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean
@@ -119,6 +158,8 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          operator_number: string | null
+          phone: string | null
           updated_at: string
           user_id: string
         }
@@ -128,6 +169,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          operator_number?: string | null
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -137,6 +180,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          operator_number?: string | null
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
