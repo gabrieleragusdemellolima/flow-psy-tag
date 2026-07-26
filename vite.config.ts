@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
           },
           {
             urlPattern: ({ url, request }) =>
-              url.origin === self.location.origin &&
+              url.origin === globalThis.location.origin &&
               (request.destination === "script" ||
                 request.destination === "style" ||
                 request.destination === "font" ||
