@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore, type Product } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useOperator } from '@/hooks/useOperator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Minus, Plus, X, CheckCircle2, AlertTriangle, Wifi, WifiOff, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
+
 
 const categories = [
   { id: 'all', label: 'Todos', emoji: '✨' },
