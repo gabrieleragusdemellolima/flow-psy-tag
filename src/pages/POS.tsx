@@ -33,8 +33,27 @@ export default function POS() {
   const [showError, setShowError] = useState('');
   const [processing, setProcessing] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
+  const [showBridge, setShowBridge] = useState(false);
+
+  const handleTagRead = useCallback((uid: string) => {
+    setIdentifier({ type: 'tag', tagCode: uid });
+    const tag = useStore.getState().tags.find((t) => t.tag_code === uid);
+    if (tag) setActiveTag(tag);
+    toast.success(`Tag detectada: ${uid}`);
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 1200; gain.gain.value = 0.08;
+      osc.start(); osc.stop(ctx.currentTime + 0.1);
+    } catch {}
+  }, [setActiveTag]);
+
+  const nfc = useNfcBridge(handleTagRead, undefined, false);
 
   useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
+
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
   const total = cartTotal();
