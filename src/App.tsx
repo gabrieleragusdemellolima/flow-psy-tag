@@ -14,6 +14,7 @@ import Reports from "./pages/Reports";
 import Admin from "./pages/Admin";
 import Courtesy from "./pages/Courtesy";
 import Customers from "./pages/Customers";
+import BlockTag from "./pages/BlockTag";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
