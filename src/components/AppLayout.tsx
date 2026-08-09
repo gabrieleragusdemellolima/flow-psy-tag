@@ -20,6 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { to: '/inventory', icon: Package, label: 'Produtos' },
     { to: '/reports', icon: BarChart3, label: 'Relatórios' },
     { to: '/courtesy', icon: Music, label: 'Consumação' },
+    { to: '/block-tag', icon: Lock, label: 'Bloquear Tag' },
     ...(isAdmin ? [{ to: '/admin', icon: Users, label: 'Admin' }] : []),
   ];
 
