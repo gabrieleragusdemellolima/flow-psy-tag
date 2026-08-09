@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore, type Product } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useOperator } from '@/hooks/useOperator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Minus, Plus, X, CheckCircle2, AlertTriangle, Wifi, WifiOff, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
+
 
 const categories = [
   { id: 'all', label: 'Todos', emoji: '✨' },
@@ -30,8 +33,27 @@ export default function POS() {
   const [showError, setShowError] = useState('');
   const [processing, setProcessing] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
+  const [showBridge, setShowBridge] = useState(false);
+
+  const handleTagRead = useCallback((uid: string) => {
+    setIdentifier({ type: 'tag', tagCode: uid });
+    const tag = useStore.getState().tags.find((t) => t.tag_code === uid);
+    if (tag) setActiveTag(tag);
+    toast.success(`Tag detectada: ${uid}`);
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 1200; gain.gain.value = 0.08;
+      osc.start(); osc.stop(ctx.currentTime + 0.1);
+    } catch {}
+  }, [setActiveTag]);
+
+  const nfc = useNfcBridge(handleTagRead, undefined, false);
 
   useEffect(() => { if (user) { fetchProducts(); fetchTags(); } }, [user]);
+
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
   const total = cartTotal();
@@ -142,6 +164,48 @@ export default function POS() {
 
       {/* Cart sidebar */}
       <div className="w-full lg:w-80 flex flex-col gap-3">
+        {/* NFC Bridge WebSocket */}
+        <div className="card-surface p-3 space-y-3">
+          <button onClick={() => setShowBridge((v) => !v)} className="w-full flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 min-w-0">
+              {nfc.connected ? <Wifi className="text-primary shrink-0" size={18} /> : <WifiOff className="text-muted-foreground shrink-0" size={18} />}
+              <span className="text-xs font-medium text-foreground truncate">
+                NFC Bridge — {nfc.connected ? '🟢 Conectado' : 'Desconectado'}
+              </span>
+            </span>
+            <ChevronDown size={16} className={`text-muted-foreground shrink-0 transition-transform ${showBridge ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showBridge && (
+            <div className="space-y-3">
+              {nfc.connected ? (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.disconnect}
+                  className="w-full px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-xs font-medium hover:bg-destructive/20 transition-colors">
+                  Desconectar
+                </motion.button>
+              ) : (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.connect}
+                  className="w-full px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors glow-primary">
+                  Conectar
+                </motion.button>
+              )}
+              {nfc.error && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="text-destructive shrink-0 mt-0.5" size={16} />
+                    <p className="text-xs text-muted-foreground">{nfc.error}</p>
+                  </div>
+                  <ol className="space-y-1 pl-4 text-[11px] text-muted-foreground list-decimal">
+                    <li>Verifique se o servidor NFC Bridge está rodando na porta 8888</li>
+                    <li>Execute o script nfc-bridge antes de conectar</li>
+                    <li>Certifique-se que o leitor ACR122U está conectado ao PC</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <IdentifyCustomer
           identifier={identifier}
           onIdentify={handleIdentify}
@@ -149,7 +213,9 @@ export default function POS() {
           tagBalance={activeTag?.balance}
           isDemoMode={isDemoMode}
           onSimulateTag={handleSimulateScan}
+          readerConnected={nfc.connected}
         />
+
 
         <div className="card-surface p-4 flex flex-col flex-1">
           <h3 className="font-display font-semibold text-sm mb-3">Carrinho</h3>
