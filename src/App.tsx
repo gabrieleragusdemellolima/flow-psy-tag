@@ -37,6 +37,7 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/courtesy" element={<Courtesy />} />
                 <Route path="/customers" element={<Customers />} />
+                <Route path="/block-tag" element={<BlockTag />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>
