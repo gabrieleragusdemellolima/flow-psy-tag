@@ -50,8 +50,6 @@ interface AppStore {
 
   activeTag: NFCTag | null;
   setActiveTag: (tag: NFCTag | null) => void;
-  isDemoMode: boolean;
-  toggleDemoMode: () => void;
 
   products: Product[];
   tags: NFCTag[];
@@ -95,8 +93,6 @@ export const useStore = create<AppStore>((set, get) => ({
 
   activeTag: null,
   setActiveTag: (tag) => set({ activeTag: tag }),
-  isDemoMode: true,
-  toggleDemoMode: () => set((s) => ({ isDemoMode: !s.isDemoMode })),
 
   products: [],
   tags: [],

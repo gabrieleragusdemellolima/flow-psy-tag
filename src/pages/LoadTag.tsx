@@ -17,7 +17,7 @@ const paymentMethods = [
 const quickAmounts = [20, 50, 100, 200];
 
 export default function LoadTag() {
-  const { tags, loadTag, loadCustomer, fetchTags, isDemoMode } = useStore();
+  const { tags, loadTag, loadCustomer, fetchTags } = useStore();
   const { user } = useAuth();
   const { operator } = useOperator();
   const [amount, setAmount] = useState('');
@@ -44,17 +44,6 @@ export default function LoadTag() {
   const nfc = useNfcBridge(handleTagRead, undefined, false);
 
   useEffect(() => { if (user) fetchTags(); }, [user, fetchTags]);
-
-  const handleSimulateScan = () => {
-    setScanning(true);
-    setTimeout(() => {
-      const code = tags.length > 0
-        ? tags[Math.floor(Math.random() * tags.length)].tag_code
-        : `TAG-${String(Date.now()).slice(-4)}`;
-      setIdentifier({ type: 'tag', tagCode: code });
-      setScanning(false);
-    }, 1200);
-  };
 
   const handleLoad = async () => {
     const val = parseFloat(amount);
@@ -185,8 +174,6 @@ export default function LoadTag() {
             onIdentify={setIdentifier}
             onClear={() => setIdentifier(null)}
             tagBalance={existingTag?.balance}
-            isDemoMode={isDemoMode}
-            onSimulateTag={handleSimulateScan}
             scanning={scanning}
             readerConnected={nfc.connected}
           />

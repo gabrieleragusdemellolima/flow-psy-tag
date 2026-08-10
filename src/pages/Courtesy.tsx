@@ -14,7 +14,7 @@ const roleLabels = [
 ];
 
 export default function Courtesy() {
-  const { tags, loadTagCourtesy, loadCustomerCourtesy, fetchTags, isDemoMode } = useStore();
+  const { tags, loadTagCourtesy, loadCustomerCourtesy, fetchTags } = useStore();
   const { user, isAdmin } = useAuth();
   const [amount, setAmount] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -25,17 +25,6 @@ export default function Courtesy() {
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
 
   useEffect(() => { if (user) fetchTags(); }, [user]);
-
-  const handleSimulateScan = () => {
-    setScanning(true);
-    setTimeout(() => {
-      const code = tags.length > 0
-        ? tags[Math.floor(Math.random() * tags.length)].tag_code
-        : `TAG-${String(Date.now()).slice(-4)}`;
-      setIdentifier({ type: 'tag', tagCode: code });
-      setScanning(false);
-    }, 1200);
-  };
 
   const handleLoad = async () => {
     const val = parseFloat(amount);
@@ -116,8 +105,6 @@ export default function Courtesy() {
         onIdentify={setIdentifier}
         onClear={() => setIdentifier(null)}
         tagBalance={identifier?.type === 'tag' ? tags.find(t => t.tag_code === identifier.tagCode)?.balance : undefined}
-        isDemoMode={isDemoMode}
-        onSimulateTag={handleSimulateScan}
         scanning={scanning}
         accentColor="secondary"
       />

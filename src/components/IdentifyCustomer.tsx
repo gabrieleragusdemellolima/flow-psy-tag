@@ -12,8 +12,6 @@ interface IdentifyCustomerProps {
   onIdentify: (id: CustomerIdentifier) => void;
   onClear: () => void;
   tagBalance?: number;
-  isDemoMode?: boolean;
-  onSimulateTag?: () => void;
   scanning?: boolean;
   readerConnected?: boolean;
   accentColor?: 'primary' | 'secondary';
@@ -24,8 +22,6 @@ export default function IdentifyCustomer({
   onIdentify,
   onClear,
   tagBalance,
-  isDemoMode,
-  onSimulateTag,
   scanning,
   readerConnected,
   accentColor = 'primary',
@@ -77,16 +73,6 @@ export default function IdentifyCustomer({
             <p className="text-sm text-muted-foreground mb-3">
               {scanning ? 'Procurando tag...' : 'Aproxime a tag do leitor ou digite o código'}
             </p>
-            {isDemoMode && onSimulateTag && (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={onSimulateTag}
-                disabled={scanning}
-                className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium text-sm glow-secondary disabled:opacity-50"
-              >
-                {scanning ? 'ESCANEANDO...' : 'SIMULAR SCAN NFC'}
-              </motion.button>
-            )}
           </div>
         )}
       </div>
