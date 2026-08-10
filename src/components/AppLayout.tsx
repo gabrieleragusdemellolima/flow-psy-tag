@@ -1,14 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, UserCircle2, LogOut } from 'lucide-react';
-import { useStore } from '@/store/useStore';
 import { useOperator } from '@/hooks/useOperator';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isDemoMode = useStore((s) => s.isDemoMode);
-  const toggleDemoMode = useStore((s) => s.toggleDemoMode);
   const { operator, clearOperator } = useOperator();
   const { isAdmin } = useAuth();
 
@@ -68,12 +65,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span className="font-mono">#{operator.number}</span>
             </button>
           )}
-          <button onClick={toggleDemoMode}
-            className={`flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-xs font-medium transition-all
-              ${isDemoMode ? 'bg-accent/10 text-accent glow-accent' : 'bg-muted text-muted-foreground'}`}>
+          <div className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground">
             <Wifi size={16} />
-            <span className="hidden lg:inline">{isDemoMode ? 'DEMO MODE' : 'NFC LIVE'}</span>
-          </button>
+            <span className="hidden lg:inline">NFC LIVE</span>
+          </div>
         </div>
       </aside>
 

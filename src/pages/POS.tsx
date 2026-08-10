@@ -23,7 +23,7 @@ export default function POS() {
   const {
     products, cart, addToCart, removeFromCart, updateQuantity,
     clearCart, cartTotal, tags, activeTag, setActiveTag,
-    processPayment, processPaymentCustomer, isDemoMode, fetchProducts, fetchTags,
+    processPayment, processPaymentCustomer, fetchProducts, fetchTags,
   } = useStore();
   const { user } = useAuth();
   const { operator } = useOperator();
@@ -67,14 +67,6 @@ export default function POS() {
     if (id.type === 'tag' && id.tagCode) {
       const tag = tags.find(t => t.tag_code === id.tagCode);
       if (tag) setActiveTag(tag);
-    }
-  };
-
-  const handleSimulateScan = () => {
-    const tag = tags[Math.floor(Math.random() * tags.length)];
-    if (tag) {
-      setActiveTag(tag);
-      setIdentifier({ type: 'tag', tagCode: tag.tag_code });
     }
   };
 
@@ -211,8 +203,6 @@ export default function POS() {
           onIdentify={handleIdentify}
           onClear={() => { setIdentifier(null); setActiveTag(null); }}
           tagBalance={activeTag?.balance}
-          isDemoMode={isDemoMode}
-          onSimulateTag={handleSimulateScan}
           readerConnected={nfc.connected}
         />
 
