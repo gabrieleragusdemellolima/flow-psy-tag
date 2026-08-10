@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { Search, ShieldOff, ShieldCheck, Tag as TagIcon, Phone, IdCard, Lock } from 'lucide-react';
+import { Search, ShieldOff, ShieldCheck, Tag as TagIcon, Phone, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CustomerRow {
@@ -26,7 +26,7 @@ interface Result {
   tag: TagRow;
 }
 
-export default function BlockTag() {
+export default function BlockTagPanel() {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Result[]>([]);
@@ -97,16 +97,7 @@ export default function BlockTag() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 pb-20 md:pb-4">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-          <Lock className="text-accent" size={22} /> Bloquear Tag
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Perda ou roubo: busque por nome, telefone, documento ou código da tag.
-        </p>
-      </div>
-
+    <div className="space-y-4">
       <div className="card-surface p-4 space-y-3">
         <div className="flex gap-2">
           <div className="relative flex-1">

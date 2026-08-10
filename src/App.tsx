@@ -14,7 +14,6 @@ import Reports from "./pages/Reports";
 import Admin from "./pages/Admin";
 import Courtesy from "./pages/Courtesy";
 import Customers from "./pages/Customers";
-import BlockTag from "./pages/BlockTag";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +36,6 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/courtesy" element={<Courtesy />} />
                 <Route path="/customers" element={<Customers />} />
-                <Route path="/block-tag" element={<BlockTag />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>
