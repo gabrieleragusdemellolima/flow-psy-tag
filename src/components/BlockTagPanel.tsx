@@ -22,8 +22,8 @@ interface TagRow {
 }
 
 interface Result {
-  customer: CustomerRow | null;
-  tag: TagRow;
+  customer: CustomerRow;
+  tag: TagRow | null;
 }
 
 export default function BlockTagPanel() {
@@ -88,10 +88,29 @@ export default function BlockTagPanel() {
         });
       }
 
-      const rows: Result[] = allTags.map((t) => ({
-        customer: owners.find((c) => c.tag_id === t.id) ?? null,
-        tag: { ...t, balance: Number(t.balance) },
-      }));
+      const rows: Result[] = owners.map((customer) => {
+        const tag = customer.tag_id ? allTags.find((item) => item.id === customer.tag_id) ?? null : null;
+        return {
+          customer,
+          tag: tag ? { ...tag, balance: Number(tag.balance) } : null,
+        };
+      });
+
+      tagsByCode.forEach((tag) => {
+        if (!rows.some((row) => row.tag?.id === tag.id)) {
+          rows.push({
+            customer: {
+              id: `unlinked-${tag.id}`,
+              name: 'Sem cliente vinculado',
+              phone: null,
+              email: null,
+              document: null,
+              tag_id: tag.id,
+            },
+            tag: { ...tag, balance: Number(tag.balance) },
+          });
+        }
+      });
 
       setResults(rows);
       setSearched(true);
@@ -112,7 +131,7 @@ export default function BlockTagPanel() {
       toast.error('Não foi possível atualizar a tag');
       return;
     }
-    setResults((prev) => prev.map((r) => (r.tag.id === tag.id ? { ...r, tag: { ...r.tag, active: nextActive } } : r)));
+    setResults((prev) => prev.map((r) => (r.tag?.id === tag.id ? { ...r, tag: { ...tag, active: nextActive } } : r)));
     toast.success(nextActive ? `Tag ${tag.tag_code} desbloqueada` : `Tag ${tag.tag_code} bloqueada`);
   };
 
@@ -148,51 +167,61 @@ export default function BlockTagPanel() {
       <div className="space-y-3">
         {results.map(({ customer, tag }) => (
           <motion.div
-            key={tag.id}
+            key={`${customer.id}-${tag?.id ?? 'no-tag'}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="card-surface p-4 flex flex-col sm:flex-row sm:items-center gap-3"
           >
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">{customer?.name ?? 'Sem cliente vinculado'}</p>
+              <p className="font-medium text-foreground truncate">{customer.name}</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 font-mono">
-                  <TagIcon size={12} /> {tag.tag_code}
-                </span>
-                {customer?.phone && (
+                {tag ? (
+                  <span className="flex items-center gap-1 font-mono">
+                    <TagIcon size={12} /> {tag.tag_code}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-destructive font-medium">
+                    <TagIcon size={12} /> Sem tag vinculada
+                  </span>
+                )}
+                {customer.phone && (
                   <span className="flex items-center gap-1">
                     <Phone size={12} /> {customer.phone}
                   </span>
                 )}
-                {customer?.document && (
+                {customer.document && (
                   <span className="flex items-center gap-1">
                     <IdCard size={12} /> {customer.document}
                   </span>
                 )}
-                <span className="font-mono">Saldo: R$ {Number(tag.balance).toFixed(2)}</span>
+                {tag && <span className="font-mono">Saldo: R$ {Number(tag.balance).toFixed(2)}</span>}
               </div>
-              <span
-                className={`inline-block mt-2 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  tag.active ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'
-                }`}
-              >
-                {tag.active ? 'Ativa' : 'Bloqueada'}
-              </span>
+              {tag && (
+                <span
+                  className={`inline-block mt-2 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    tag.active ? 'bg-primary/15 text-primary' : 'bg-destructive/15 text-destructive'
+                  }`}
+                >
+                  {tag.active ? 'Ativa' : 'Bloqueada'}
+                </span>
+              )}
             </div>
 
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={() => toggleBlock(tag)}
-              disabled={busyId === tag.id}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold disabled:opacity-40 ${
-                tag.active
-                  ? 'bg-destructive text-destructive-foreground'
-                  : 'bg-primary text-primary-foreground'
-              }`}
-            >
-              {tag.active ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}
-              {tag.active ? 'Bloquear' : 'Desbloquear'}
-            </motion.button>
+            {tag && (
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                onClick={() => toggleBlock(tag)}
+                disabled={busyId === tag.id}
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold disabled:opacity-40 ${
+                  tag.active
+                    ? 'bg-destructive text-destructive-foreground'
+                    : 'bg-primary text-primary-foreground'
+                }`}
+              >
+                {tag.active ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}
+                {tag.active ? 'Bloquear' : 'Desbloquear'}
+              </motion.button>
+            )}
           </motion.div>
         ))}
       </div>
