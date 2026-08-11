@@ -43,36 +43,55 @@ export default function BlockTagPanel() {
 
   const handleSearch = async () => {
     const q = query.trim();
-    if (!q || !user) return;
+    if (!q) return;
     setLoading(true);
     try {
       const like = `%${q}%`;
-      const [{ data: customers }, { data: tagsByCode }] = await Promise.all([
+      const bare = q.replace(/[^a-zA-Z0-9]/g, '');
+      const [custRes, tagRes] = await Promise.all([
         supabase
           .from('customers')
           .select('id, name, phone, email, document, tag_id')
           .or(`name.ilike.${like},phone.ilike.${like},document.ilike.${like},email.ilike.${like}`)
           .limit(20),
-        supabase.from('tags').select('id, tag_code, balance, active').ilike('tag_code', like).limit(20),
+        supabase
+          .from('tags')
+          .select('id, tag_code, balance, active')
+          .or(bare ? `tag_code.ilike.${like},tag_code.ilike.%${bare}%` : `tag_code.ilike.${like}`)
+          .limit(20),
       ]);
 
-      const tagIds = (customers || []).map((c) => c.tag_id).filter(Boolean) as string[];
-      let linkedTags: TagRow[] = [];
-      if (tagIds.length) {
-        const { data } = await supabase.from('tags').select('id, tag_code, balance, active').in('id', tagIds);
-        linkedTags = (data || []) as TagRow[];
+      const customers = (custRes.data || []) as CustomerRow[];
+      const tagsByCode = (tagRes.data || []) as TagRow[];
+
+      const tagIds = new Set<string>();
+      customers.forEach((c) => c.tag_id && tagIds.add(c.tag_id));
+      tagsByCode.forEach((t) => tagIds.add(t.id));
+
+      let allTags: TagRow[] = [...tagsByCode];
+      const missing = [...tagIds].filter((id) => !allTags.some((t) => t.id === id));
+      if (missing.length) {
+        const { data } = await supabase.from('tags').select('id, tag_code, balance, active').in('id', missing);
+        allTags = [...allTags, ...((data || []) as TagRow[])];
       }
 
-      const rows: Result[] = [];
-      (customers || []).forEach((c) => {
-        const t = linkedTags.find((lt) => lt.id === c.tag_id);
-        if (t) rows.push({ customer: c as CustomerRow, tag: { ...t, balance: Number(t.balance) } });
-      });
-      (tagsByCode || []).forEach((t) => {
-        if (rows.some((r) => r.tag.id === t.id)) return;
-        const owner = (customers || []).find((c) => c.tag_id === t.id) as CustomerRow | undefined;
-        rows.push({ customer: owner ?? null, tag: { ...t, balance: Number(t.balance) } as TagRow });
-      });
+      // owners of tags found by code (may not match the text filter above)
+      let owners: CustomerRow[] = [...customers];
+      const codeTagIds = tagsByCode.map((t) => t.id);
+      if (codeTagIds.length) {
+        const { data } = await supabase
+          .from('customers')
+          .select('id, name, phone, email, document, tag_id')
+          .in('tag_id', codeTagIds);
+        ((data || []) as CustomerRow[]).forEach((c) => {
+          if (!owners.some((o) => o.id === c.id)) owners.push(c);
+        });
+      }
+
+      const rows: Result[] = allTags.map((t) => ({
+        customer: owners.find((c) => c.tag_id === t.id) ?? null,
+        tag: { ...t, balance: Number(t.balance) },
+      }));
 
       setResults(rows);
       setSearched(true);
@@ -82,6 +101,7 @@ export default function BlockTagPanel() {
       setLoading(false);
     }
   };
+
 
   const toggleBlock = async (tag: TagRow) => {
     setBusyId(tag.id);
