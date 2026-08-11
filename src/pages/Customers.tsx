@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Search, Phone, Users as UsersIcon, Tag, Mail, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStore } from '@/store/useStore';
+import LeitorNFC from '@/components/LeitorNFC';
+
 
 interface Customer {
   id: string;
@@ -30,7 +32,7 @@ export default function Customers() {
   const [email, setEmail] = useState('');
   const [document, setDocument] = useState('');
   const [tagCode, setTagCode] = useState('');
-  const [useTag, setUseTag] = useState(false);
+
 
 
   useEffect(() => {
@@ -51,11 +53,15 @@ export default function Customers() {
 
   const handleSubmit = async () => {
     if (!name.trim() || !user) return;
+    if (!tagCode.trim()) {
+      toast.error('Leia a tag no leitor para cadastrar o cliente');
+      return;
+    }
     setLoading(true);
 
     try {
       let finalTagId: string | null = null;
-      if (useTag && tagCode.trim()) {
+      {
         const existing = tags.find((t) => t.tag_code.toLowerCase() === tagCode.trim().toLowerCase());
         if (existing) {
           finalTagId = existing.id;
@@ -69,6 +75,7 @@ export default function Customers() {
           finalTagId = newTag.id;
         }
       }
+
 
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
@@ -87,8 +94,8 @@ export default function Customers() {
       setEmail('');
       setDocument('');
       setTagCode('');
-      setUseTag(false);
       setShowForm(false);
+
       fetchCustomers();
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao cadastrar cliente');
@@ -186,35 +193,35 @@ export default function Customers() {
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    onClick={() => setUseTag(!useTag)}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      useTag ? 'bg-primary border-primary' : 'border-muted-foreground/30'
-                    }`}
-                  >
-                    {useTag && <span className="text-primary-foreground text-xs">✓</span>}
-                  </button>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <Tag size={12} /> Vincular Tag NFC (opcional)
-                  </label>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                  <Tag size={12} /> Tag NFC * (leitura obrigatória)
+                </label>
+                <LeitorNFC onTagRead={(uid) => setTagCode(uid.toUpperCase())} />
+                <div
+                  className={`w-full px-4 py-3 rounded-lg text-sm font-mono border ${
+                    tagCode
+                      ? 'bg-primary/10 border-primary/40 text-primary'
+                      : 'bg-muted/50 border-transparent text-muted-foreground'
+                  }`}
+                >
+                  {tagCode || 'Aproxime a tag do leitor...'}
                 </div>
-                {useTag && (
-                  <input
-                    type="text"
-                    value={tagCode}
-                    onChange={(e) => setTagCode(e.target.value.toUpperCase())}
-                    placeholder="Digite o código da tag (ex: AB12CD34)"
-                    className="w-full bg-muted/50 px-4 py-3 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground"
-                  />
+                {tagCode && (
+                  <button
+                    onClick={() => setTagCode('')}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Limpar tag lida
+                  </button>
                 )}
               </div>
+
 
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleSubmit}
-                disabled={!name.trim() || loading}
+                disabled={!name.trim() || !tagCode.trim() || loading}
                 className="w-full py-3.5 bg-primary text-primary-foreground rounded-lg font-display font-bold text-sm glow-primary disabled:opacity-30 disabled:shadow-none transition-all"
               >
                 {loading ? 'CADASTRANDO...' : 'CADASTRAR CLIENTE'}
