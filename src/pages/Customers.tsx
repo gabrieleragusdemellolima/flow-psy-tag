@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Search, Phone, Users as UsersIcon, Tag, Mail, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStore } from '@/store/useStore';
+import LeitorNFC from '@/components/LeitorNFC';
+
 
 interface Customer {
   id: string;
@@ -30,7 +32,7 @@ export default function Customers() {
   const [email, setEmail] = useState('');
   const [document, setDocument] = useState('');
   const [tagCode, setTagCode] = useState('');
-  const [useTag, setUseTag] = useState(false);
+
 
 
   useEffect(() => {
