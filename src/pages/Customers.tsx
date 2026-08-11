@@ -95,7 +95,7 @@ export default function Customers() {
       setDocument('');
       setTagCode('');
       setShowForm(false);
-      setShowForm(false);
+
       fetchCustomers();
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao cadastrar cliente');
@@ -221,7 +221,7 @@ export default function Customers() {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleSubmit}
-                disabled={!name.trim() || loading}
+                disabled={!name.trim() || !tagCode.trim() || loading}
                 className="w-full py-3.5 bg-primary text-primary-foreground rounded-lg font-display font-bold text-sm glow-primary disabled:opacity-30 disabled:shadow-none transition-all"
               >
                 {loading ? 'CADASTRANDO...' : 'CADASTRAR CLIENTE'}
