@@ -53,11 +53,15 @@ export default function Customers() {
 
   const handleSubmit = async () => {
     if (!name.trim() || !user) return;
+    if (!tagCode.trim()) {
+      toast.error('Leia a tag no leitor para cadastrar o cliente');
+      return;
+    }
     setLoading(true);
 
     try {
       let finalTagId: string | null = null;
-      if (useTag && tagCode.trim()) {
+      {
         const existing = tags.find((t) => t.tag_code.toLowerCase() === tagCode.trim().toLowerCase());
         if (existing) {
           finalTagId = existing.id;
@@ -71,6 +75,7 @@ export default function Customers() {
           finalTagId = newTag.id;
         }
       }
+
 
       const { error } = await supabase.from('customers').insert({
         name: name.trim(),
