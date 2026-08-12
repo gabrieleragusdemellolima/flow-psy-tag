@@ -112,10 +112,24 @@ export default function Admin() {
   };
 
   const toggleAdmin = async (userId: string, currentRole: Role) => {
-    if (currentRole === 'admin') {
-      await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'admin');
-    } else {
-      await supabase.from('user_roles').insert({ user_id: userId, role: 'admin' });
+    const nextRole: Role = currentRole === 'admin' ? 'operator' : 'admin';
+    await supabase.from('user_roles').delete().eq('user_id', userId);
+    const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: nextRole });
+    if (error) return toast.error(error.message);
+
+    // keep the invite list (source of truth on next login) in sync
+    const target = users.find((u) => u.user_id === userId);
+    if (target?.email) {
+      await supabase.from('operator_invites').upsert(
+        {
+          email: target.email.toLowerCase(),
+          display_name: target.display_name || target.email.split('@')[0],
+          operator_number: target.operator_number || nextOperatorNumber(),
+          phone: target.phone,
+          role: nextRole,
+        },
+        { onConflict: 'email' },
+      );
     }
     loadAll();
   };
