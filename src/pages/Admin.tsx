@@ -203,8 +203,6 @@ export default function Admin() {
               className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm glow-primary">
               Salvar
             </motion.button>
-
-            </motion.button>
           </div>
         </form>
 
