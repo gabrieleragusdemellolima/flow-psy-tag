@@ -138,12 +138,30 @@ export default function Admin() {
         <Shield className="text-primary" size={24} />
         <div>
           <h1 className="font-display text-2xl font-bold">Painel ADM</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie administradores e operadores de caixa (login via Gmail)</p>
+          <p className="text-muted-foreground text-sm mt-1">Relatórios financeiros e controle de acesso (login via Gmail)</p>
         </div>
       </div>
 
+      <div className="flex gap-2">
+        {([
+          { id: 'financeiro', label: 'Financeiro', icon: BarChart3 },
+          { id: 'equipe', label: 'Equipe', icon: Users },
+        ] as const).map(({ id, label, icon: Icon }) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
+              ${tab === id ? 'bg-primary/10 text-primary glow-primary' : 'bg-muted/40 text-muted-foreground hover:text-foreground'}`}>
+            <Icon size={16} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'financeiro' && <Reports />}
+
+      {tab === 'equipe' && (
+        <div className="space-y-6">
       {/* Convidar */}
       <div className="card-surface p-5 space-y-4">
+
         <div className="flex items-center gap-2">
           <UserPlus size={18} className="text-primary" />
           <h2 className="font-display font-semibold">Adicionar operador ou admin</h2>
