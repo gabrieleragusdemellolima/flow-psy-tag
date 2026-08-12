@@ -9,16 +9,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { operator, clearOperator } = useOperator();
   const { isAdmin } = useAuth();
 
-  const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/customers', icon: Users, label: 'Clientes' },
-    { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
-    { to: '/pos', icon: ShoppingCart, label: 'PDV' },
-    { to: '/inventory', icon: Package, label: 'Produtos' },
-    { to: '/reports', icon: BarChart3, label: 'Relatórios' },
-    { to: '/courtesy', icon: Music, label: 'Consumação' },
-    ...(isAdmin ? [{ to: '/admin', icon: Users, label: 'Admin' }] : []),
-  ];
+  const navItems = isAdmin
+    ? [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/customers', icon: Users, label: 'Clientes' },
+        { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
+        { to: '/pos', icon: ShoppingCart, label: 'PDV' },
+        { to: '/inventory', icon: Package, label: 'Produtos' },
+        { to: '/reports', icon: BarChart3, label: 'Relatórios' },
+        { to: '/courtesy', icon: Music, label: 'Consumação' },
+        { to: '/admin', icon: Shield, label: 'Painel ADM' },
+      ]
+    : [
+        { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
+        { to: '/pos', icon: ShoppingCart, label: 'PDV' },
+      ];
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
