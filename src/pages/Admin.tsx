@@ -243,13 +243,15 @@ export default function Admin() {
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => toggleAdmin(u.user_id, u.role)}
                   className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
                     ${u.role === 'admin' ? 'bg-accent/10 text-accent hover:bg-accent/20' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
-                  {u.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                  {u.role === 'admin' ? 'Tornar vendedor' : 'Tornar ADM'}
                 </motion.button>
               </motion.div>
             ))}
           </div>
         )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
