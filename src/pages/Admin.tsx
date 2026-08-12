@@ -215,7 +215,7 @@ export default function Admin() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium truncate">{i.display_name}</span>
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${i.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                      {i.role === 'admin' ? 'ADM' : 'OPER'}
+                      {i.role === 'admin' ? 'ADM' : 'VENDEDOR'}
                     </span>
                     <span className="text-[10px] font-mono text-muted-foreground">#{i.operator_number}</span>
                     {i.claimed_at ? (
@@ -251,10 +251,12 @@ export default function Admin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-sm truncate">{u.display_name || u.email?.split('@')[0]}</p>
-                    {u.role === 'admin' && (
+                    {u.role === 'admin' ? (
                       <span className="flex items-center gap-1 text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
                         <Crown size={10} /> ADM
                       </span>
+                    ) : (
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">VENDEDOR</span>
                     )}
                     {u.operator_number && (
                       <span className="text-[10px] font-mono text-muted-foreground">#{u.operator_number}</span>
