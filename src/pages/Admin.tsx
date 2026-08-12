@@ -10,10 +10,9 @@ type Role = 'admin' | 'operator';
 
 interface Invite {
   id: string;
-
   email: string;
-  display_name: string;
-  operator_number: string;
+  display_name: string | null;
+  operator_number: string | null;
   phone: string | null;
   role: Role;
   claimed_at: string | null;
@@ -34,6 +33,7 @@ export default function Admin() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'financeiro' | 'equipe'>('financeiro');
 
   const [form, setForm] = useState({ email: '', display_name: '', operator_number: '', phone: '', role: 'operator' as Role });
 
