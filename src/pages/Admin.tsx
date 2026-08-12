@@ -186,22 +186,24 @@ export default function Admin() {
           <div className="relative">
             <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.operator_number} onChange={(e) => setForm({ ...form, operator_number: e.target.value })}
-              placeholder="Nº operador (ex: 001)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Nº vendedor (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
           <div className="relative">
             <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="Telefone" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Telefone (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
           <div className="flex gap-2 md:col-span-2">
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
               className="flex-1 px-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50">
-              <option value="operator">Operador de caixa</option>
-              <option value="admin">Administrador</option>
+              <option value="operator">Vendedor (PDV + Carregar Tag)</option>
+              <option value="admin">Administrador (acesso total)</option>
             </select>
             <motion.button whileTap={{ scale: 0.97 }} type="submit"
               className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm glow-primary">
-              Salvar convite
+              Salvar
+            </motion.button>
+
             </motion.button>
           </div>
         </form>
