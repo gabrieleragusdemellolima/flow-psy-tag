@@ -99,8 +99,16 @@ export const useStore = create<AppStore>((set, get) => ({
   transactions: [],
 
   fetchProducts: async () => {
-    const { data } = await supabase.from('products').select('*').eq('active', true).order('category');
-    if (data) set({ products: data.map(p => ({ ...p, price: Number(p.price), cost_price: Number(p.cost_price), stock: Number(p.stock), min_stock: Number(p.min_stock) })) as Product[] });
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, price, category, emoji, stock, min_stock, active, created_by, created_at, updated_at')
+      .eq('active', true)
+      .order('category');
+    if (!data) return;
+    // cost_price is admin-only and served by a guarded function
+    const { data: costs } = await (supabase as any).rpc('admin_product_costs');
+    const costMap = new Map<string, number>((costs || []).map((c: any) => [c.id, Number(c.cost_price)]));
+    set({ products: data.map(p => ({ ...p, price: Number(p.price), cost_price: costMap.get(p.id) ?? 0, stock: Number(p.stock), min_stock: Number(p.min_stock) })) as Product[] });
   },
 
   fetchTags: async () => {
