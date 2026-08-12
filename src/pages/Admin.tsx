@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock } from 'lucide-react';
+import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
+import Reports from '@/pages/Reports';
 
 type Role = 'admin' | 'operator';
 
 interface Invite {
   id: string;
+
   email: string;
   display_name: string;
   operator_number: string;

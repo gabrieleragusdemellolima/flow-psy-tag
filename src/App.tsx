@@ -34,7 +34,7 @@ const App = () => (
                 <Route path="/pos" element={<POS />} />
 
                 {/* Admin only */}
-                <Route path="/" element={<AdminRoute><Index /></AdminRoute>} />
+                <Route path="/" element={<AdminRoute redirectTo="/pos"><Index /></AdminRoute>} />
                 <Route path="/inventory" element={<AdminRoute><Inventory /></AdminRoute>} />
                 <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
                 <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
