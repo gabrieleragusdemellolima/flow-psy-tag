@@ -63,6 +63,14 @@ export default function Admin() {
     if (isAdmin) loadAll();
   }, [isAdmin]);
 
+  const nextOperatorNumber = () => {
+    const used = [...invites.map((i) => i.operator_number), ...users.map((u) => u.operator_number)]
+      .map((n) => parseInt((n || '').replace(/\D/g, ''), 10))
+      .filter((n) => !Number.isNaN(n));
+    const next = (used.length ? Math.max(...used) : 0) + 1;
+    return String(next).padStart(3, '0');
+  };
+
   const handleAddInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = form.email.trim().toLowerCase();
@@ -70,22 +78,30 @@ export default function Admin() {
       toast.error('Somente e-mails @gmail.com são aceitos');
       return;
     }
-    if (!form.display_name.trim() || !form.operator_number.trim()) {
-      toast.error('Preencha nome e número do operador');
-      return;
-    }
     const { error } = await supabase.from('operator_invites').upsert(
       {
         email,
-        display_name: form.display_name.trim(),
-        operator_number: form.operator_number.trim(),
+        display_name: form.display_name.trim() || email.split('@')[0],
+        operator_number: form.operator_number.trim() || nextOperatorNumber(),
         phone: form.phone.trim() || null,
         role: form.role,
       },
       { onConflict: 'email' },
     );
     if (error) return toast.error(error.message);
-    toast.success('Convite salvo. Peça para a pessoa entrar com Google.');
+
+    // If this person already signed in before, apply the role right away
+    const existing = users.find((u) => u.email.toLowerCase() === email);
+    if (existing && existing.role !== form.role) {
+      await supabase.from('user_roles').delete().eq('user_id', existing.user_id);
+      await supabase.from('user_roles').insert({ user_id: existing.user_id, role: form.role });
+    }
+
+    toast.success(
+      form.role === 'operator'
+        ? 'Vendedor salvo. Ele terá acesso apenas ao PDV e Carregar Tag.'
+        : 'Administrador salvo.',
+    );
     setForm({ email: '', display_name: '', operator_number: '', phone: '', role: 'operator' });
     loadAll();
   };
