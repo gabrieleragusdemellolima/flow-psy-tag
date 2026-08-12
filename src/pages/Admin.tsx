@@ -161,18 +161,22 @@ export default function Admin() {
         <div className="space-y-6">
       {/* Convidar */}
       <div className="card-surface p-5 space-y-4">
-
         <div className="flex items-center gap-2">
           <UserPlus size={18} className="text-primary" />
-          <h2 className="font-display font-semibold">Adicionar operador ou admin</h2>
+          <h2 className="font-display font-semibold">Cadastrar vendedor (ou novo ADM)</h2>
         </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Basta o e-mail @gmail. Vendedores acessam apenas <strong>PDV</strong> e <strong>Carregar Tag</strong>.
+          Quem entrar com Gmail sem estar nesta lista entra como ADM.
+        </p>
 
         <form onSubmit={handleAddInvite} className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="relative">
             <UserIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-              placeholder="Nome completo" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Nome (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
+
           <div className="relative">
             <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
