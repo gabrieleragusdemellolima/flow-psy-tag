@@ -2,16 +2,17 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock } from 'lucide-react';
+import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
+import Reports from '@/pages/Reports';
 
 type Role = 'admin' | 'operator';
 
 interface Invite {
   id: string;
   email: string;
-  display_name: string;
-  operator_number: string;
+  display_name: string | null;
+  operator_number: string | null;
   phone: string | null;
   role: Role;
   claimed_at: string | null;
@@ -32,6 +33,7 @@ export default function Admin() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'financeiro' | 'equipe'>('financeiro');
 
   const [form, setForm] = useState({ email: '', display_name: '', operator_number: '', phone: '', role: 'operator' as Role });
 
@@ -61,6 +63,14 @@ export default function Admin() {
     if (isAdmin) loadAll();
   }, [isAdmin]);
 
+  const nextOperatorNumber = () => {
+    const used = [...invites.map((i) => i.operator_number), ...users.map((u) => u.operator_number)]
+      .map((n) => parseInt((n || '').replace(/\D/g, ''), 10))
+      .filter((n) => !Number.isNaN(n));
+    const next = (used.length ? Math.max(...used) : 0) + 1;
+    return String(next).padStart(3, '0');
+  };
+
   const handleAddInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = form.email.trim().toLowerCase();
@@ -68,22 +78,30 @@ export default function Admin() {
       toast.error('Somente e-mails @gmail.com são aceitos');
       return;
     }
-    if (!form.display_name.trim() || !form.operator_number.trim()) {
-      toast.error('Preencha nome e número do operador');
-      return;
-    }
     const { error } = await supabase.from('operator_invites').upsert(
       {
         email,
-        display_name: form.display_name.trim(),
-        operator_number: form.operator_number.trim(),
+        display_name: form.display_name.trim() || email.split('@')[0],
+        operator_number: form.operator_number.trim() || nextOperatorNumber(),
         phone: form.phone.trim() || null,
         role: form.role,
       },
       { onConflict: 'email' },
     );
     if (error) return toast.error(error.message);
-    toast.success('Convite salvo. Peça para a pessoa entrar com Google.');
+
+    // If this person already signed in before, apply the role right away
+    const existing = users.find((u) => u.email.toLowerCase() === email);
+    if (existing && existing.role !== form.role) {
+      await supabase.from('user_roles').delete().eq('user_id', existing.user_id);
+      await supabase.from('user_roles').insert({ user_id: existing.user_id, role: form.role });
+    }
+
+    toast.success(
+      form.role === 'operator'
+        ? 'Vendedor salvo. Ele terá acesso apenas ao PDV e Carregar Tag.'
+        : 'Administrador salvo.',
+    );
     setForm({ email: '', display_name: '', operator_number: '', phone: '', role: 'operator' });
     loadAll();
   };
@@ -94,10 +112,24 @@ export default function Admin() {
   };
 
   const toggleAdmin = async (userId: string, currentRole: Role) => {
-    if (currentRole === 'admin') {
-      await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', 'admin');
-    } else {
-      await supabase.from('user_roles').insert({ user_id: userId, role: 'admin' });
+    const nextRole: Role = currentRole === 'admin' ? 'operator' : 'admin';
+    await supabase.from('user_roles').delete().eq('user_id', userId);
+    const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: nextRole });
+    if (error) return toast.error(error.message);
+
+    // keep the invite list (source of truth on next login) in sync
+    const target = users.find((u) => u.user_id === userId);
+    if (target?.email) {
+      await supabase.from('operator_invites').upsert(
+        {
+          email: target.email.toLowerCase(),
+          display_name: target.display_name || target.email.split('@')[0],
+          operator_number: target.operator_number || nextOperatorNumber(),
+          phone: target.phone,
+          role: nextRole,
+        },
+        { onConflict: 'email' },
+      );
     }
     loadAll();
   };
@@ -120,23 +152,45 @@ export default function Admin() {
         <Shield className="text-primary" size={24} />
         <div>
           <h1 className="font-display text-2xl font-bold">Painel ADM</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie administradores e operadores de caixa (login via Gmail)</p>
+          <p className="text-muted-foreground text-sm mt-1">Relatórios financeiros e controle de acesso (login via Gmail)</p>
         </div>
       </div>
 
+      <div className="flex gap-2">
+        {([
+          { id: 'financeiro', label: 'Financeiro', icon: BarChart3 },
+          { id: 'equipe', label: 'Equipe', icon: Users },
+        ] as const).map(({ id, label, icon: Icon }) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
+              ${tab === id ? 'bg-primary/10 text-primary glow-primary' : 'bg-muted/40 text-muted-foreground hover:text-foreground'}`}>
+            <Icon size={16} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'financeiro' && <Reports />}
+
+      {tab === 'equipe' && (
+        <div className="space-y-6">
       {/* Convidar */}
       <div className="card-surface p-5 space-y-4">
         <div className="flex items-center gap-2">
           <UserPlus size={18} className="text-primary" />
-          <h2 className="font-display font-semibold">Adicionar operador ou admin</h2>
+          <h2 className="font-display font-semibold">Cadastrar vendedor (ou novo ADM)</h2>
         </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Basta o e-mail @gmail. Vendedores acessam apenas <strong>PDV</strong> e <strong>Carregar Tag</strong>.
+          Quem entrar com Gmail sem estar nesta lista entra como ADM.
+        </p>
 
         <form onSubmit={handleAddInvite} className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="relative">
             <UserIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-              placeholder="Nome completo" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Nome (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
+
           <div className="relative">
             <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -146,22 +200,22 @@ export default function Admin() {
           <div className="relative">
             <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.operator_number} onChange={(e) => setForm({ ...form, operator_number: e.target.value })}
-              placeholder="Nº operador (ex: 001)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Nº vendedor (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm font-mono outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
           <div className="relative">
             <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="Telefone" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
+              placeholder="Telefone (opcional)" className="w-full pl-9 pr-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50" />
           </div>
           <div className="flex gap-2 md:col-span-2">
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
               className="flex-1 px-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50">
-              <option value="operator">Operador de caixa</option>
-              <option value="admin">Administrador</option>
+              <option value="operator">Vendedor (PDV + Carregar Tag)</option>
+              <option value="admin">Administrador (acesso total)</option>
             </select>
             <motion.button whileTap={{ scale: 0.97 }} type="submit"
               className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm glow-primary">
-              Salvar convite
+              Salvar
             </motion.button>
           </div>
         </form>
@@ -175,7 +229,7 @@ export default function Admin() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium truncate">{i.display_name}</span>
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${i.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                      {i.role === 'admin' ? 'ADM' : 'OPER'}
+                      {i.role === 'admin' ? 'ADM' : 'VENDEDOR'}
                     </span>
                     <span className="text-[10px] font-mono text-muted-foreground">#{i.operator_number}</span>
                     {i.claimed_at ? (
@@ -211,10 +265,12 @@ export default function Admin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-sm truncate">{u.display_name || u.email?.split('@')[0]}</p>
-                    {u.role === 'admin' && (
+                    {u.role === 'admin' ? (
                       <span className="flex items-center gap-1 text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
                         <Crown size={10} /> ADM
                       </span>
+                    ) : (
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">VENDEDOR</span>
                     )}
                     {u.operator_number && (
                       <span className="text-[10px] font-mono text-muted-foreground">#{u.operator_number}</span>
@@ -225,13 +281,15 @@ export default function Admin() {
                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => toggleAdmin(u.user_id, u.role)}
                   className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
                     ${u.role === 'admin' ? 'bg-accent/10 text-accent hover:bg-accent/20' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
-                  {u.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
+                  {u.role === 'admin' ? 'Tornar vendedor' : 'Tornar ADM'}
                 </motion.button>
               </motion.div>
             ))}
           </div>
         )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

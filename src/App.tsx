@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
 import OperatorGate from "@/components/OperatorGate";
+import AdminRoute from "@/components/AdminRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import LoadTag from "./pages/LoadTag";
@@ -28,14 +29,17 @@ const App = () => (
           <BrowserRouter>
             <AppLayout>
               <Routes>
-                <Route path="/" element={<Index />} />
+                {/* Sellers (operators) */}
                 <Route path="/load-tag" element={<LoadTag />} />
                 <Route path="/pos" element={<POS />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/courtesy" element={<Courtesy />} />
-                <Route path="/customers" element={<Customers />} />
+
+                {/* Admin only */}
+                <Route path="/" element={<AdminRoute redirectTo="/pos"><Index /></AdminRoute>} />
+                <Route path="/inventory" element={<AdminRoute><Inventory /></AdminRoute>} />
+                <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                <Route path="/courtesy" element={<AdminRoute><Courtesy /></AdminRoute>} />
+                <Route path="/customers" element={<AdminRoute><Customers /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>

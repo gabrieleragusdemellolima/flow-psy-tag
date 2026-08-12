@@ -72,10 +72,10 @@ export type Database = {
           claimed_at: string | null
           created_at: string
           created_by: string | null
-          display_name: string
+          display_name: string | null
           email: string
           id: string
-          operator_number: string
+          operator_number: string | null
           phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
@@ -84,10 +84,10 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           created_by?: string | null
-          display_name: string
+          display_name?: string | null
           email: string
           id?: string
-          operator_number: string
+          operator_number?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
@@ -96,10 +96,10 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           created_by?: string | null
-          display_name?: string
+          display_name?: string | null
           email?: string
           id?: string
-          operator_number?: string
+          operator_number?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
