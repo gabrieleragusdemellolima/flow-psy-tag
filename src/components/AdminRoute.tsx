@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 /** Restricts a route to admins. Sellers (operators) are sent to the POS. */
-export default function AdminRoute({ children }: { children: ReactNode }) {
+export default function AdminRoute({ children, redirectTo }: { children: ReactNode; redirectTo?: string }) {
   const { isAdmin, loading, user } = useAuth();
 
   if (loading) {
@@ -12,6 +12,8 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) return <Navigate to="/pos" replace />;
+
+  if (!isAdmin && redirectTo) return <Navigate to={redirectTo} replace />;
 
   if (!isAdmin) {
     return (
