@@ -40,7 +40,7 @@ export default function Reports() {
       .from('sale_items')
       .select(`
         quantity, unit_price, created_at, sale_number,
-        product:products(name, category, cost_price),
+        product:products(id, name, category),
         transaction:transactions(operator_id, created_at)
       `)
       .order('created_at', { ascending: false });
@@ -51,12 +51,16 @@ export default function Reports() {
       const { data: profiles } = await supabase.from('profiles').select('user_id, email').in('user_id', opIds);
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.email]) || []);
 
+      // cost_price is admin-only and served by a guarded function
+      const { data: costs } = await (supabase as any).rpc('admin_product_costs');
+      const costMap = new Map<string, number>((costs || []).map((c: any) => [c.id, Number(c.cost_price)]));
+
       setSaleDetails(data.map((d: any) => ({
         product_name: d.product?.name || 'Unknown',
         product_category: d.product?.category || '',
         quantity: d.quantity,
         unit_price: Number(d.unit_price),
-        cost_price: Number(d.product?.cost_price || 0),
+        cost_price: costMap.get(d.product?.id) ?? 0,
         operator_email: profileMap.get(d.transaction?.operator_id) || 'Unknown',
         created_at: d.transaction?.created_at || d.created_at,
         sale_number: d.sale_number || null,
