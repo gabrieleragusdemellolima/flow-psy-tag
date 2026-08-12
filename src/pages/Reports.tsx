@@ -136,7 +136,7 @@ export default function Reports() {
             onChange={(e) => setFilterOperator(e.target.value)}
             className="bg-muted/50 px-3 py-2 rounded-lg text-sm outline-none text-foreground"
           >
-            <option value="all">Todos os Operadores</option>
+            <option value="all">Todos os vendedores (total)</option>
             {operators.map(op => (
               <option key={op.id} value={op.id}>{op.email}</option>
             ))}
