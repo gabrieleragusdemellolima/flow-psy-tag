@@ -67,7 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => loadProfile(sess.user.id), 0);
       } else {
         setProfile(null);
+        setRoles([]);
         setIsAdmin(false);
+        setCanLoadTag(false);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -82,7 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setRoles([]);
     setIsAdmin(false);
+    setCanLoadTag(false);
   };
 
   const refreshProfile = async () => {
@@ -90,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, canLoadTag, roles, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
