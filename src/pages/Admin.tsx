@@ -185,11 +185,12 @@ export default function Admin() {
       <div className="card-surface p-5 space-y-4">
         <div className="flex items-center gap-2">
           <UserPlus size={18} className="text-primary" />
-          <h2 className="font-display font-semibold">Cadastrar vendedor (ou novo ADM)</h2>
+          <h2 className="font-display font-semibold">Cadastrar acesso (vendedor, caixa ou ADM)</h2>
         </div>
         <p className="text-xs text-muted-foreground -mt-2">
-          Basta o e-mail @gmail. Vendedores acessam apenas <strong>PDV</strong> e <strong>Carregar Tag</strong>.
-          Quem entrar com Gmail sem estar nesta lista entra como ADM.
+          Basta o e-mail @gmail. <strong>Vendedor</strong> acessa apenas o <strong>PDV</strong>;{' '}
+          <strong>Caixa</strong> acessa PDV + <strong>Carregar Tag</strong>; <strong>ADM</strong> acessa tudo.
+          Quem entrar com Gmail sem estar nesta lista entra como vendedor.
         </p>
 
         <form onSubmit={handleAddInvite} className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -218,7 +219,8 @@ export default function Admin() {
           <div className="flex gap-2 md:col-span-2">
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
               className="flex-1 px-3 py-2.5 bg-muted/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50">
-              <option value="operator">Vendedor (PDV + Carregar Tag)</option>
+              <option value="operator">Vendedor (somente PDV)</option>
+              <option value="caixa">Caixa (PDV + Carregar Tag)</option>
               <option value="admin">Administrador (acesso total)</option>
             </select>
             <motion.button whileTap={{ scale: 0.97 }} type="submit"
