@@ -105,8 +105,10 @@ export default function Admin() {
 
     toast.success(
       form.role === 'operator'
-        ? 'Vendedor salvo. Ele terá acesso apenas ao PDV e Carregar Tag.'
-        : 'Administrador salvo.',
+        ? 'Vendedor salvo. Acesso apenas ao PDV.'
+        : form.role === 'caixa'
+          ? 'Caixa salvo. Acesso ao PDV e ao Carregar Tag.'
+          : 'Administrador salvo.',
     );
     setForm({ email: '', display_name: '', operator_number: '', phone: '', role: 'operator' });
     loadAll();
@@ -117,8 +119,7 @@ export default function Admin() {
     loadAll();
   };
 
-  const toggleAdmin = async (userId: string, currentRole: Role) => {
-    const nextRole: Role = currentRole === 'admin' ? 'operator' : 'admin';
+  const setRole = async (userId: string, nextRole: Role) => {
     await supabase.from('user_roles').delete().eq('user_id', userId);
     const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: nextRole });
     if (error) return toast.error(error.message);
@@ -137,6 +138,7 @@ export default function Admin() {
         { onConflict: 'email' },
       );
     }
+    toast.success(`Perfil atualizado para ${ROLE_LABEL[nextRole]}`);
     loadAll();
   };
 
