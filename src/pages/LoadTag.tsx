@@ -26,7 +26,7 @@ export default function LoadTag() {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
-  const [tab, setTab] = useState<'load' | 'block'>('load');
+  const [tab, setTab] = useState<'load' | 'balance' | 'block'>('load');
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
