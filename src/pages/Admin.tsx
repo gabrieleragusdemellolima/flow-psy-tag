@@ -6,7 +6,13 @@ import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as User
 import { toast } from 'sonner';
 import Reports from '@/pages/Reports';
 
-type Role = 'admin' | 'operator';
+type Role = 'admin' | 'operator' | 'caixa';
+
+const ROLE_LABEL: Record<Role, string> = {
+  admin: 'ADM',
+  caixa: 'CAIXA',
+  operator: 'VENDEDOR',
+};
 
 interface Invite {
   id: string;
