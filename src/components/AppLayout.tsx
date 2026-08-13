@@ -12,18 +12,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = isAdmin
     ? [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/customers', icon: Users, label: 'Clientes' },
-        { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
+        { to: '/load-tag', icon: CreditCard, label: 'Carregar Tag' },
         { to: '/pos', icon: ShoppingCart, label: 'PDV' },
         { to: '/inventory', icon: Package, label: 'Produtos' },
         { to: '/reports', icon: BarChart3, label: 'Relatórios' },
-        { to: '/courtesy', icon: Music, label: 'Consumação' },
         { to: '/admin', icon: Shield, label: 'Painel ADM' },
       ]
     : [
         { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
         { to: '/pos', icon: ShoppingCart, label: 'PDV' },
       ];
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -86,7 +85,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 flex justify-around py-2 z-50">
-        {navItems.slice(0, 5).map(({ to, icon: Icon, label }) => {
+        {navItems.slice(0, 6).map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to;
           return (
             <NavLink key={to} to={to}
