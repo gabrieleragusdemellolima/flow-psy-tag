@@ -97,6 +97,12 @@ export default function LoadTag() {
           Carregar Saldo
         </button>
         <button
+          onClick={() => setTab('balance')}
+          className={tab === 'balance' ? tabActive : tabInactive}
+        >
+          Consultar Saldo
+        </button>
+        <button
           onClick={() => setTab('block')}
           className={tab === 'block' ? tabActive : tabInactive}
         >
