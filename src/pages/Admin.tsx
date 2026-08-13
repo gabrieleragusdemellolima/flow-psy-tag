@@ -249,47 +249,58 @@ export default function Admin() {
         )}
       </div>
 
-      {/* Usuários ativos */}
-      <div className="card-surface p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Users size={18} className="text-muted-foreground" />
-          <h2 className="font-display font-semibold">Usuários ativos ({users.length})</h2>
-        </div>
+      {/* Usuários ativos separados por perfil */}
+      {([
+        { key: 'admin' as Role, title: 'Administradores', icon: Crown },
+        { key: 'operator' as Role, title: 'Operadores de caixa', icon: Users },
+      ]).map(({ key, title, icon: Icon }) => {
+        const list = users.filter((u) => u.role === key);
+        return (
+          <div key={key} className="card-surface p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon size={18} className={key === 'admin' ? 'text-primary' : 'text-muted-foreground'} />
+              <h2 className="font-display font-semibold">{title} ({list.length})</h2>
+            </div>
 
-        {loading ? (
-          <p className="text-muted-foreground text-sm text-center py-8 animate-pulse-glow font-mono">CARREGANDO...</p>
-        ) : (
-          <div className="space-y-2">
-            {users.map((u) => (
-              <motion.div key={u.user_id} layout className="card-surface-sm p-4 flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-sm truncate">{u.display_name || u.email?.split('@')[0]}</p>
-                    {u.role === 'admin' ? (
-                      <span className="flex items-center gap-1 text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
-                        <Crown size={10} /> ADM
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">VENDEDOR</span>
-                    )}
-                    {u.operator_number && (
-                      <span className="text-[10px] font-mono text-muted-foreground">#{u.operator_number}</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                </div>
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => toggleAdmin(u.user_id, u.role)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
-                    ${u.role === 'admin' ? 'bg-accent/10 text-accent hover:bg-accent/20' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
-                  {u.role === 'admin' ? 'Tornar vendedor' : 'Tornar ADM'}
-                </motion.button>
-              </motion.div>
-            ))}
+            {loading ? (
+              <p className="text-muted-foreground text-sm text-center py-8 animate-pulse-glow font-mono">CARREGANDO...</p>
+            ) : list.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4">Nenhum {key === 'admin' ? 'administrador' : 'operador'} cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-2">
+                {list.map((u) => (
+                  <motion.div key={u.user_id} layout className="card-surface-sm p-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-sm truncate">{u.display_name || u.email?.split('@')[0]}</p>
+                        {u.role === 'admin' ? (
+                          <span className="flex items-center gap-1 text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
+                            <Crown size={10} /> ADM
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">VENDEDOR</span>
+                        )}
+                        {u.operator_number && (
+                          <span className="text-[10px] font-mono text-muted-foreground">#{u.operator_number}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    </div>
+                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => toggleAdmin(u.user_id, u.role)}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
+                        ${u.role === 'admin' ? 'bg-accent/10 text-accent hover:bg-accent/20' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
+                      {u.role === 'admin' ? 'Tornar vendedor' : 'Tornar ADM'}
+                    </motion.button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-          </div>
+        );
+      })}
         </div>
       )}
+
     </div>
   );
 }
