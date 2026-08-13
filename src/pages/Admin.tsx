@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
-import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock, BarChart3 } from 'lucide-react';
+import { Shield, Users, Crown, UserPlus, Trash2, Mail, Phone, Hash, User as UserIcon, Lock, BarChart3, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import Reports from '@/pages/Reports';
 
@@ -238,8 +238,8 @@ export default function Admin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium truncate">{i.display_name}</span>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${i.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                      {i.role === 'admin' ? 'ADM' : 'VENDEDOR'}
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${i.role === 'admin' ? 'bg-primary/10 text-primary' : i.role === 'caixa' ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'}`}>
+                      {ROLE_LABEL[i.role]}
                     </span>
                     <span className="text-[10px] font-mono text-muted-foreground">#{i.operator_number}</span>
                     {i.claimed_at ? (
@@ -261,46 +261,48 @@ export default function Admin() {
 
       {/* Usuários ativos separados por perfil */}
       {([
-        { key: 'admin' as Role, title: 'Administradores', icon: Crown },
-        { key: 'operator' as Role, title: 'Operadores de caixa', icon: Users },
-      ]).map(({ key, title, icon: Icon }) => {
+        { key: 'admin' as Role, title: 'Administradores', icon: Crown, empty: 'administrador' },
+        { key: 'caixa' as Role, title: 'Caixas (podem carregar tag)', icon: CreditCard, empty: 'caixa' },
+        { key: 'operator' as Role, title: 'Vendedores (somente PDV)', icon: Users, empty: 'vendedor' },
+      ]).map(({ key, title, icon: Icon, empty }) => {
         const list = users.filter((u) => u.role === key);
         return (
           <div key={key} className="card-surface p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Icon size={18} className={key === 'admin' ? 'text-primary' : 'text-muted-foreground'} />
+              <Icon size={18} className={key === 'admin' ? 'text-primary' : key === 'caixa' ? 'text-secondary' : 'text-muted-foreground'} />
               <h2 className="font-display font-semibold">{title} ({list.length})</h2>
             </div>
 
             {loading ? (
               <p className="text-muted-foreground text-sm text-center py-8 animate-pulse-glow font-mono">CARREGANDO...</p>
             ) : list.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4">Nenhum {key === 'admin' ? 'administrador' : 'operador'} cadastrado ainda.</p>
+              <p className="text-muted-foreground text-sm py-4">Nenhum {empty} cadastrado ainda.</p>
             ) : (
               <div className="space-y-2">
                 {list.map((u) => (
-                  <motion.div key={u.user_id} layout className="card-surface-sm p-4 flex items-center gap-4">
+                  <motion.div key={u.user_id} layout className="card-surface-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-sm truncate">{u.display_name || u.email?.split('@')[0]}</p>
-                        {u.role === 'admin' ? (
-                          <span className="flex items-center gap-1 text-[10px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
-                            <Crown size={10} /> ADM
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">VENDEDOR</span>
-                        )}
+                        <span className={`flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded ${u.role === 'admin' ? 'text-primary bg-primary/10' : u.role === 'caixa' ? 'text-secondary bg-secondary/10' : 'text-muted-foreground bg-muted'}`}>
+                          {u.role === 'admin' && <Crown size={10} />} {ROLE_LABEL[u.role]}
+                        </span>
                         {u.operator_number && (
                           <span className="text-[10px] font-mono text-muted-foreground">#{u.operator_number}</span>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     </div>
-                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => toggleAdmin(u.user_id, u.role)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all
-                        ${u.role === 'admin' ? 'bg-accent/10 text-accent hover:bg-accent/20' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
-                      {u.role === 'admin' ? 'Tornar vendedor' : 'Tornar ADM'}
-                    </motion.button>
+                    <div className="flex gap-2 flex-wrap">
+                      {(['operator', 'caixa', 'admin'] as Role[])
+                        .filter((r) => r !== u.role)
+                        .map((r) => (
+                          <motion.button key={r} whileTap={{ scale: 0.95 }} onClick={() => setRole(u.user_id, r)}
+                            className="px-3 py-2 rounded-lg text-xs font-medium bg-muted/60 text-foreground hover:bg-primary/15 hover:text-primary transition-all">
+                            Tornar {ROLE_LABEL[r]}
+                          </motion.button>
+                        ))}
+                    </div>
                   </motion.div>
                 ))}
               </div>
