@@ -106,11 +106,39 @@ export type Database = {
         }
         Relationships: []
       }
+      product_costs: {
+        Row: {
+          cost_price: number
+          created_at: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_costs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
           category: string
-          cost_price: number
           created_at: string
           created_by: string | null
           emoji: string
@@ -124,7 +152,6 @@ export type Database = {
         Insert: {
           active?: boolean
           category: string
-          cost_price?: number
           created_at?: string
           created_by?: string | null
           emoji?: string
@@ -138,7 +165,6 @@ export type Database = {
         Update: {
           active?: boolean
           category?: string
-          cost_price?: number
           created_at?: string
           created_by?: string | null
           emoji?: string
@@ -338,13 +364,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_product_costs: {
-        Args: never
-        Returns: {
-          cost_price: number
-          id: string
-        }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
