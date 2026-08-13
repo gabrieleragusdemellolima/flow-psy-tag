@@ -85,7 +85,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 flex justify-around py-2 z-50">
-        {navItems.slice(0, 5).map(({ to, icon: Icon, label }) => {
+        {navItems.slice(0, 6).map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to;
           return (
             <NavLink key={to} to={to}
