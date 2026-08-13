@@ -3,7 +3,7 @@ import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useOperator } from '@/hooks/useOperator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Banknote, QrCode, CheckCircle2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { CreditCard, Banknote, QrCode, CheckCircle2, Wifi, WifiOff, AlertTriangle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
@@ -26,7 +26,7 @@ export default function LoadTag() {
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
-  const [tab, setTab] = useState<'load' | 'block'>('load');
+  const [tab, setTab] = useState<'load' | 'balance' | 'block'>('load');
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
@@ -97,6 +97,12 @@ export default function LoadTag() {
           Carregar Saldo
         </button>
         <button
+          onClick={() => setTab('balance')}
+          className={tab === 'balance' ? tabActive : tabInactive}
+        >
+          Consultar Saldo
+        </button>
+        <button
           onClick={() => setTab('block')}
           className={tab === 'block' ? tabActive : tabInactive}
         >
@@ -105,6 +111,82 @@ export default function LoadTag() {
       </div>
 
       {tab === 'block' && <BlockTagPanel />}
+
+      {tab === 'balance' && (
+        <>
+          {/* NFC Bridge WebSocket */}
+          <div className="card-surface p-4 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {nfc.connected ? (
+                  <Wifi className="text-primary shrink-0" size={20} />
+                ) : (
+                  <WifiOff className="text-muted-foreground shrink-0" size={20} />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">NFC Bridge</p>
+                  <p className="text-xs text-muted-foreground">
+                    {nfc.connected ? '🟢 Conectado — aproxime a tag' : 'Desconectado'}
+                  </p>
+                </div>
+              </div>
+              {nfc.connected ? (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.disconnect}
+                  className="px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-xs font-medium hover:bg-destructive/20 transition-colors">
+                  Desconectar
+                </motion.button>
+              ) : (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={nfc.connect}
+                  className="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors glow-primary">
+                  Conectar
+                </motion.button>
+              )}
+            </div>
+            {nfc.error && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="text-destructive shrink-0 mt-0.5" size={18} />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">Erro de conexão</p>
+                    <p className="text-sm text-muted-foreground">{nfc.error}</p>
+                  </div>
+                </div>
+                <ol className="space-y-1 pl-5 text-xs text-muted-foreground list-decimal">
+                  <li>Verifique se o servidor NFC Bridge está rodando na porta 8888</li>
+                  <li>Execute o script nfc-bridge antes de conectar</li>
+                  <li>Certifique-se que o leitor ACR122U está conectado ao PC</li>
+                </ol>
+              </div>
+            )}
+          </div>
+
+          <IdentifyCustomer
+            identifier={identifier}
+            onIdentify={setIdentifier}
+            onClear={() => setIdentifier(null)}
+            scanning={scanning}
+            readerConnected={nfc.connected}
+          />
+
+          <div className="card-surface p-6 text-center space-y-3">
+            <Wallet className="mx-auto text-primary" size={32} />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saldo da Tag</p>
+            {identifier?.type === 'tag' ? (
+              <>
+                <p className="font-mono text-sm text-muted-foreground">{identifier.tagCode}</p>
+                <p className="font-mono text-4xl font-bold text-foreground">
+                  R$ {(existingTag?.balance ?? 0).toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {existingTag ? 'Tag encontrada no sistema' : 'Tag não cadastrada — saldo zerado'}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aproxime a tag ou digite o código para consultar</p>
+            )}
+          </div>
+        </>
+      )}
 
       {tab === 'load' && (
         <>
