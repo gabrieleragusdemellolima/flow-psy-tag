@@ -105,9 +105,9 @@ export const useStore = create<AppStore>((set, get) => ({
       .eq('active', true)
       .order('category');
     if (!data) return;
-    // cost_price is admin-only and served by a guarded function
-    const { data: costs } = await (supabase as any).rpc('admin_product_costs');
-    const costMap = new Map<string, number>((costs || []).map((c: any) => [c.id, Number(c.cost_price)]));
+    // cost_price lives in an admin-only table; operators get 0
+    const { data: costs } = await supabase.from('product_costs').select('product_id, cost_price');
+    const costMap = new Map<string, number>((costs || []).map((c: any) => [c.product_id, Number(c.cost_price)]));
     set({ products: data.map(p => ({ ...p, price: Number(p.price), cost_price: costMap.get(p.id) ?? 0, stock: Number(p.stock), min_stock: Number(p.min_stock) })) as Product[] });
   },
 
@@ -319,12 +319,18 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   addProduct: async (product, userId) => {
-    await supabase.from('products').insert({ ...product, created_by: userId });
+    const { cost_price, ...rest } = product as any;
+    const { data: created } = await supabase.from('products').insert({ ...rest, created_by: userId }).select('id').single();
+    if (created && cost_price != null) {
+      await supabase.from('product_costs').upsert({ product_id: created.id, cost_price });
+    }
     await get().fetchProducts();
   },
 
   updateProduct: async (id, data) => {
-    await supabase.from('products').update(data).eq('id', id);
+    const { cost_price, ...rest } = data as any;
+    if (Object.keys(rest).length) await supabase.from('products').update(rest).eq('id', id);
+    if (cost_price != null) await supabase.from('product_costs').upsert({ product_id: id, cost_price });
     await get().fetchProducts();
   },
 
