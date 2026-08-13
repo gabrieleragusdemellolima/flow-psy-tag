@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
 import OperatorGate from "@/components/OperatorGate";
 import AdminRoute from "@/components/AdminRoute";
+import CaixaRoute from "@/components/CaixaRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import LoadTag from "./pages/LoadTag";
@@ -30,7 +31,7 @@ const App = () => (
             <AppLayout>
               <Routes>
                 {/* Sellers (operators) */}
-                <Route path="/load-tag" element={<LoadTag />} />
+                <Route path="/load-tag" element={<CaixaRoute><LoadTag /></CaixaRoute>} />
                 <Route path="/pos" element={<POS />} />
 
                 {/* Admin only */}

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { operator, clearOperator } = useOperator();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canLoadTag } = useAuth();
 
   const navItems = isAdmin
     ? [
@@ -18,10 +18,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { to: '/reports', icon: BarChart3, label: 'Relatórios' },
         { to: '/admin', icon: Shield, label: 'Painel ADM' },
       ]
-    : [
-        { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
-        { to: '/pos', icon: ShoppingCart, label: 'PDV' },
-      ];
+    : canLoadTag
+      ? [
+          { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
+          { to: '/pos', icon: ShoppingCart, label: 'PDV' },
+        ]
+      : [{ to: '/pos', icon: ShoppingCart, label: 'PDV' }];
 
 
   return (
