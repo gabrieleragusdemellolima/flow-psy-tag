@@ -11,12 +11,17 @@ export interface Profile {
   phone: string | null;
 }
 
+export type AppRole = 'admin' | 'operator' | 'caixa';
+
 interface AuthCtx {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
+  /** caixa or admin: can access "Carregar Tag" */
+  canLoadTag: boolean;
+  roles: AppRole[];
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -27,6 +32,8 @@ const AuthContext = createContext<AuthCtx>({
   profile: null,
   loading: true,
   isAdmin: false,
+  canLoadTag: false,
+  roles: [],
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -35,16 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canLoadTag, setCanLoadTag] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const [{ data: prof }, { data: roles }] = await Promise.all([
+    const [{ data: prof }, { data: roleRows }] = await Promise.all([
       supabase.from('profiles').select('user_id, display_name, email, avatar_url, operator_number, phone').eq('user_id', uid).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', uid),
     ]);
+    const list = ((roleRows || []).map((r) => r.role) as AppRole[]);
     setProfile(prof as Profile | null);
-    setIsAdmin(!!roles?.some((r) => r.role === 'admin'));
+    setRoles(list);
+    setIsAdmin(list.includes('admin'));
+    setCanLoadTag(list.includes('admin') || list.includes('caixa'));
   };
 
   useEffect(() => {
@@ -55,7 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => loadProfile(sess.user.id), 0);
       } else {
         setProfile(null);
+        setRoles([]);
         setIsAdmin(false);
+        setCanLoadTag(false);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -70,7 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setRoles([]);
     setIsAdmin(false);
+    setCanLoadTag(false);
   };
 
   const refreshProfile = async () => {
@@ -78,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, canLoadTag, roles, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
