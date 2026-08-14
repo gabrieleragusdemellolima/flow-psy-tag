@@ -7,6 +7,9 @@ import { Minus, Plus, X, CheckCircle2, AlertTriangle, Wifi, WifiOff, ChevronDown
 import { toast } from 'sonner';
 import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
+import ReceiptDialog from '@/components/ReceiptDialog';
+import type { ReceiptData } from '@/lib/receipt';
+import { findTagOwner } from '@/lib/customerLookup';
 
 
 const categories = [
