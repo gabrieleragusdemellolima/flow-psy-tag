@@ -137,6 +137,7 @@ export default function POS() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] pb-16 md:pb-0">
+      <ReceiptDialog data={receipt} onClose={() => setReceipt(null)} />
       <AnimatePresence>
         {showSuccess && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
