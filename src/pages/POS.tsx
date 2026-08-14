@@ -28,7 +28,7 @@ export default function POS() {
     clearCart, cartTotal, tags, activeTag, setActiveTag,
     processPayment, processPaymentCustomer, fetchProducts, fetchTags,
   } = useStore();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { operator } = useOperator();
 
   const [filter, setFilter] = useState<string>('all');
@@ -37,6 +37,7 @@ export default function POS() {
   const [processing, setProcessing] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
   const [showBridge, setShowBridge] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
