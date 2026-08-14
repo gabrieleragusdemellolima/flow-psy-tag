@@ -83,6 +83,10 @@ export default function POS() {
     }
     setProcessing(true);
 
+    const soldItems = cart.map((i) => ({ name: i.product.name, quantity: i.quantity, unit_price: i.product.price }));
+    const paidTotal = total;
+    const tagCode = identifier.tagCode ?? null;
+
     let ok = false;
     if (identifier.type === 'tag' && activeTag) {
       ok = await processPayment(user.id, operator?.name, operator?.number);
@@ -106,8 +110,28 @@ export default function POS() {
           osc2.start(); osc2.stop(ctx.currentTime + 0.1);
         }, 120);
       } catch {}
+
+      const owner = await findTagOwner(tagCode);
+      const remaining = useStore.getState().tags.find((t) => t.tag_code === tagCode)?.balance ?? null;
+
       setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setIdentifier(null); setActiveTag(null); }, 2000);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIdentifier(null);
+        setActiveTag(null);
+        setReceipt({
+          type: 'sale',
+          tagCode,
+          customerName: owner?.name ?? null,
+          customerPhone: owner?.phone ?? null,
+          operatorName: operator?.name || profile?.display_name || profile?.email || 'Operador',
+          operatorNumber: operator?.number || profile?.operator_number || null,
+          amount: paidTotal,
+          balanceAfter: remaining,
+          items: soldItems,
+          date: new Date(),
+        });
+      }, 1500);
     }
   };
 
