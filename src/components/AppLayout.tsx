@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, UserCircle2, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, CreditCard, ShoppingCart, Package, BarChart3, Wifi, Users, Music, UserCircle2, LogOut, Shield, Tag } from 'lucide-react';
 import { useOperator } from '@/hooks/useOperator';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
@@ -12,6 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = isAdmin
     ? [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/register-tag', icon: Tag, label: 'Cadastrar Tag' },
         { to: '/load-tag', icon: CreditCard, label: 'Carregar Tag' },
         { to: '/pos', icon: ShoppingCart, label: 'PDV' },
         { to: '/inventory', icon: Package, label: 'Produtos' },
@@ -20,6 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       ]
     : canLoadTag
       ? [
+          { to: '/register-tag', icon: Tag, label: 'Cadastrar' },
           { to: '/load-tag', icon: CreditCard, label: 'Carregar' },
           { to: '/pos', icon: ShoppingCart, label: 'PDV' },
         ]
