@@ -10,6 +10,7 @@ import CaixaRoute from "@/components/CaixaRoute";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import LoadTag from "./pages/LoadTag";
+import RegisterTag from "./pages/RegisterTag";
 import POS from "./pages/POS";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
