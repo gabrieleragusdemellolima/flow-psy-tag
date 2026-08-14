@@ -69,12 +69,29 @@ export default function LoadTag() {
         osc.frequency.value = 880; gain.gain.value = 0.1;
         osc.start(); osc.stop(ctx.currentTime + 0.15);
       } catch {}
+
+      const tagCode = identifier.tagCode ?? null;
+      const owner = await findTagOwner(tagCode);
+      const updatedTag = useStore.getState().tags.find((t) => t.tag_code === tagCode);
+
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         setAmount('');
         setIdentifier(null);
-      }, 2000);
+        setReceipt({
+          type: 'load',
+          tagCode,
+          customerName: owner?.name ?? null,
+          customerPhone: owner?.phone ?? null,
+          operatorName: operator?.name || profile?.display_name || profile?.email || 'Operador',
+          operatorNumber: operator?.number || profile?.operator_number || null,
+          paymentMethod,
+          amount: val,
+          balanceAfter: updatedTag?.balance ?? null,
+          date: new Date(),
+        });
+      }, 1500);
     }
   };
 
