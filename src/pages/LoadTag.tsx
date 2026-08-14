@@ -105,6 +105,7 @@ export default function LoadTag() {
 
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-20 md:pb-0">
+      <ReceiptDialog data={receipt} onClose={() => setReceipt(null)} />
       <div>
         <h1 className="font-display text-2xl font-bold">Carregar Tag</h1>
         <p className="text-muted-foreground text-sm mt-1">Carregue saldo ou bloqueie tags perdidas/roubadas</p>
