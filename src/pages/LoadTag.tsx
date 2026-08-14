@@ -21,7 +21,7 @@ const quickAmounts = [20, 50, 100, 200];
 
 export default function LoadTag() {
   const { tags, loadTag, loadCustomer, fetchTags } = useStore();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { operator } = useOperator();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -30,6 +30,7 @@ export default function LoadTag() {
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
   const [tab, setTab] = useState<'load' | 'balance' | 'block'>('load');
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
