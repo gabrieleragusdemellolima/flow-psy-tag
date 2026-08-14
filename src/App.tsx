@@ -33,6 +33,7 @@ const App = () => (
               <Routes>
                 {/* Sellers (operators) */}
                 <Route path="/load-tag" element={<CaixaRoute><LoadTag /></CaixaRoute>} />
+                <Route path="/register-tag" element={<CaixaRoute><RegisterTag /></CaixaRoute>} />
                 <Route path="/pos" element={<POS />} />
 
                 {/* Admin only */}
