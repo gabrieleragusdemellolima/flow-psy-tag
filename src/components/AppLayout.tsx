@@ -93,7 +93,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           const isActive = location.pathname === to;
           return (
             <NavLink key={to} to={to}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium
+              className={`flex flex-col shrink-0 items-center gap-0.5 px-2 py-1 text-[10px] font-medium whitespace-nowrap
                 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
               <Icon size={18} />{label}
             </NavLink>
