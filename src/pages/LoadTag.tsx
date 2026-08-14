@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 import BlockTagPanel from '@/components/BlockTagPanel';
+import ReceiptDialog from '@/components/ReceiptDialog';
+import type { ReceiptData } from '@/lib/receipt';
+import { findTagOwner } from '@/lib/customerLookup';
 
 const paymentMethods = [
   { id: 'cash', label: 'Dinheiro', icon: Banknote },
@@ -18,7 +21,7 @@ const quickAmounts = [20, 50, 100, 200];
 
 export default function LoadTag() {
   const { tags, loadTag, loadCustomer, fetchTags } = useStore();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { operator } = useOperator();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -27,6 +30,7 @@ export default function LoadTag() {
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
   const [tab, setTab] = useState<'load' | 'balance' | 'block'>('load');
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
@@ -65,12 +69,29 @@ export default function LoadTag() {
         osc.frequency.value = 880; gain.gain.value = 0.1;
         osc.start(); osc.stop(ctx.currentTime + 0.15);
       } catch {}
+
+      const tagCode = identifier.tagCode ?? null;
+      const owner = await findTagOwner(tagCode);
+      const updatedTag = useStore.getState().tags.find((t) => t.tag_code === tagCode);
+
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         setAmount('');
         setIdentifier(null);
-      }, 2000);
+        setReceipt({
+          type: 'load',
+          tagCode,
+          customerName: owner?.name ?? null,
+          customerPhone: owner?.phone ?? null,
+          operatorName: operator?.name || profile?.display_name || profile?.email || 'Operador',
+          operatorNumber: operator?.number || profile?.operator_number || null,
+          paymentMethod,
+          amount: val,
+          balanceAfter: updatedTag?.balance ?? null,
+          date: new Date(),
+        });
+      }, 1500);
     }
   };
 
@@ -84,6 +105,7 @@ export default function LoadTag() {
 
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-20 md:pb-0">
+      <ReceiptDialog data={receipt} onClose={() => setReceipt(null)} />
       <div>
         <h1 className="font-display text-2xl font-bold">Carregar Tag</h1>
         <p className="text-muted-foreground text-sm mt-1">Carregue saldo ou bloqueie tags perdidas/roubadas</p>

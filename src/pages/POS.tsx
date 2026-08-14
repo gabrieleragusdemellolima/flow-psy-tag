@@ -7,6 +7,9 @@ import { Minus, Plus, X, CheckCircle2, AlertTriangle, Wifi, WifiOff, ChevronDown
 import { toast } from 'sonner';
 import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
+import ReceiptDialog from '@/components/ReceiptDialog';
+import type { ReceiptData } from '@/lib/receipt';
+import { findTagOwner } from '@/lib/customerLookup';
 
 
 const categories = [
@@ -25,7 +28,7 @@ export default function POS() {
     clearCart, cartTotal, tags, activeTag, setActiveTag,
     processPayment, processPaymentCustomer, fetchProducts, fetchTags,
   } = useStore();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { operator } = useOperator();
 
   const [filter, setFilter] = useState<string>('all');
@@ -34,6 +37,7 @@ export default function POS() {
   const [processing, setProcessing] = useState(false);
   const [identifier, setIdentifier] = useState<CustomerIdentifier | null>(null);
   const [showBridge, setShowBridge] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const handleTagRead = useCallback((uid: string) => {
     setIdentifier({ type: 'tag', tagCode: uid });
@@ -79,6 +83,10 @@ export default function POS() {
     }
     setProcessing(true);
 
+    const soldItems = cart.map((i) => ({ name: i.product.name, quantity: i.quantity, unit_price: i.product.price }));
+    const paidTotal = total;
+    const tagCode = identifier.tagCode ?? null;
+
     let ok = false;
     if (identifier.type === 'tag' && activeTag) {
       ok = await processPayment(user.id, operator?.name, operator?.number);
@@ -102,13 +110,34 @@ export default function POS() {
           osc2.start(); osc2.stop(ctx.currentTime + 0.1);
         }, 120);
       } catch {}
+
+      const owner = await findTagOwner(tagCode);
+      const remaining = useStore.getState().tags.find((t) => t.tag_code === tagCode)?.balance ?? null;
+
       setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setIdentifier(null); setActiveTag(null); }, 2000);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIdentifier(null);
+        setActiveTag(null);
+        setReceipt({
+          type: 'sale',
+          tagCode,
+          customerName: owner?.name ?? null,
+          customerPhone: owner?.phone ?? null,
+          operatorName: operator?.name || profile?.display_name || profile?.email || 'Operador',
+          operatorNumber: operator?.number || profile?.operator_number || null,
+          amount: paidTotal,
+          balanceAfter: remaining,
+          items: soldItems,
+          date: new Date(),
+        });
+      }, 1500);
     }
   };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] pb-16 md:pb-0">
+      <ReceiptDialog data={receipt} onClose={() => setReceipt(null)} />
       <AnimatePresence>
         {showSuccess && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
