@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { useNfcBridge } from '@/hooks/useNfcBridge';
 import IdentifyCustomer, { type CustomerIdentifier } from '@/components/IdentifyCustomer';
 import BlockTagPanel from '@/components/BlockTagPanel';
+import ReceiptDialog from '@/components/ReceiptDialog';
+import type { ReceiptData } from '@/lib/receipt';
+import { findTagOwner } from '@/lib/customerLookup';
 
 const paymentMethods = [
   { id: 'cash', label: 'Dinheiro', icon: Banknote },
